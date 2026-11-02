@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertCircle, ArrowLeft, Loader2, Pencil, Save, UserCircle } from "lucide-react";
+import Navbar from "../../components/Navbar";
 import { getUserId, getRole } from "../../services/authService";
 import {
   buscarPacientePorId,
@@ -14,226 +16,366 @@ import {
   atualizarRecepcionista,
 } from "../../services/recepcionistaService";
 
-const GerenciarPerfil = () => {
-  const userId = getUserId() || localStorage.getItem("userId");
-  const role = getRole() || localStorage.getItem("role");
+const ROLES = {
+  ROLE_PACIENTE: { label: "Paciente", buscar: buscarPacientePorId, atualizar: atualizarPaciente },
+  ROLE_DENTISTA: { label: "Dentista", buscar: buscarDentistaPorId, atualizar: atualizarDentista },
+  ROLE_RECEPCIONISTA: { label: "Recepcionista", buscar: buscarRecepcionistaPorId, atualizar: atualizarRecepcionista },
+};
 
-  const [data, setData] = useState(null);
-  const [editando, setEditando] = useState(false);
-  const [form, setForm] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [mensagem, setMensagem] = useState("");
-  const [tipoMensagem, setTipoMensagem] = useState("");
+const TURNOS = [
+  { value: "MANHA", label: "Manhã" },
+  { value: "TARDE", label: "Tarde" },
+  { value: "NOITE", label: "Noite" },
+];
+
+const inputClass =
+  "mt-1 block w-full rounded-md border border-gray-200 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500";
+
+const somenteDigitos = (value) => (value ? String(value).replace(/\D/g, "") : "");
+
+const formatCpf = (value) => {
+  const digits = somenteDigitos(value);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return digits.replace(/(\d{3})(\d+)/, "$1.$2");
+  if (digits.length <= 9) return digits.replace(/(\d{3})(\d{3})(\d+)/, "$1.$2.$3");
+  return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2}).*/, "$1.$2.$3-$4");
+};
+
+const formatPhone = (value) => {
+  const digits = somenteDigitos(value);
+  if (digits.length <= 2) return digits;
+  const ddd = digits.slice(0, 2);
+  const rest = digits.slice(2);
+  if (rest.length <= 4) return `(${ddd}) ${rest}`;
+  if (digits.length === 11) return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+  return `(${ddd}) ${rest.slice(0, rest.length - 4)}-${rest.slice(-4)}`;
+};
+
+// Recebe "AAAA-MM-DD" (ou ISO com horário) e devolve "DD/MM/AAAA".
+const formatDate = (value) => {
+  if (!value || typeof value !== "string") return "";
+  const [ano, mes, dia] = value.split("T")[0].split("-");
+  return dia ? `${dia}/${mes}/${ano}` : value;
+};
+
+const formatTurno = (value) => TURNOS.find((t) => t.value === value)?.label || value;
+
+const montarForm = (role, data) => {
+  const base = { nome: data.nome || "", email: data.email || "" };
+  if (role === "ROLE_PACIENTE") {
+    return {
+      ...base,
+      cpf: formatCpf(data.cpf),
+      telefone: formatPhone(data.telefone),
+      dataNascimento: data.dataNascimento || "",
+    };
+  }
+  if (role === "ROLE_DENTISTA") {
+    return { ...base, cro: data.cro || "", especialidade: data.especialidade || "" };
+  }
+  return { ...base, turno: data.turno || "" };
+};
+
+const iniciais = (nome) =>
+  (nome || "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0].toUpperCase())
+    .join("");
+
+function Campo({ label, children }) {
+  return (
+    <div>
+      <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">{label}</dt>
+      <dd className="mt-1 text-sm text-gray-900">{children || "-"}</dd>
+    </div>
+  );
+}
+
+function Rotulo({ label, children }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const GerenciarPerfil = () => {
+  const userId = getUserId();
+  const role = getRole();
+  const config = ROLES[role];
   const navigate = useNavigate();
 
+  const [data, setData] = useState(null);
+  const [form, setForm] = useState({});
+  const [editando, setEditando] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [erroCarregamento, setErroCarregamento] = useState("");
+  const [mensagem, setMensagem] = useState({ type: null, text: "" });
+
   useEffect(() => {
-    if (!userId) {
+    if (!userId || !config) {
       setLoading(false);
       return;
     }
-    setLoading(true);
-    const fetchByRole = async () => {
+    const carregar = async () => {
       try {
-        if (role === "ROLE_PACIENTE") {
-          const res = await buscarPacientePorId(userId);
-          setData(res.data);
-          setForm({
-            nome: res.data.nome || "",
-            email: res.data.email || "",
-            cpf: formatCpf(res.data.cpf || ""),
-            telefone: formatPhone(res.data.telefone || ""),
-            dataNascimento: res.data.dataNascimento || "",
-          });
-        } else if (role === "ROLE_DENTISTA") {
-          const res = await buscarDentistaPorId(userId);
-          setData(res.data);
-          setForm({
-            nome: res.data.nome || "",
-            email: res.data.email || "",
-            cro: res.data.cro || "",
-            especialidade: res.data.especialidade || "",
-          });
-        } else if (role === "ROLE_RECEPCIONISTA") {
-          const res = await buscarRecepcionistaPorId(userId);
-          setData(res.data);
-          setForm({
-            nome: res.data.nome || "",
-            email: res.data.email || "",
-            turno: res.data.turno || "",
-          });
-        }
+        const res = await config.buscar(userId);
+        setData(res.data);
+        setForm(montarForm(role, res.data));
       } catch (err) {
         console.error("Erro ao carregar perfil:", err);
+        setErroCarregamento(
+          err?.response?.data?.message || "Não foi possível carregar o seu perfil. Tente novamente."
+        );
       } finally {
         setLoading(false);
       }
     };
-    fetchByRole();
-  }, [userId, role]);
+    carregar();
+  }, [userId, role, config]);
+
+  useEffect(() => {
+    if (!mensagem.text) return;
+    const timer = setTimeout(() => setMensagem({ type: null, text: "" }), 4000);
+    return () => clearTimeout(timer);
+  }, [mensagem]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "cpf") {
-      const digits = (value || "").replace(/\D/g, "");
-      setForm((prev) => ({ ...prev, cpf: formatCpf(digits) }));
-      return;
+      setForm((prev) => ({ ...prev, cpf: formatCpf(value) }));
+    } else if (name === "telefone") {
+      setForm((prev) => ({ ...prev, telefone: formatPhone(value) }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
-    if (name === "telefone") {
-      const digits = (value || "").replace(/\D/g, "");
-      setForm((prev) => ({ ...prev, telefone: formatPhone(digits) }));
-      return;
-    }
-    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const formatDate = (value) => {
-    if (!value) return "";
-    if (Object.prototype.toString.call(value) === "[object Date]") {
-      const d = value;
-      const day = String(d.getDate()).padStart(2, "0");
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const year = d.getFullYear();
-      return `${day}/${month}/${year}`;
-    }
-    if (typeof value === "string") {
-      const datePart = value.split("T")[0];
-      const parts = datePart.split("-");
-      if (parts.length >= 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
-      return value;
-    }
-    return "";
+  const handleCancel = () => {
+    setForm(montarForm(role, data));
+    setEditando(false);
   };
 
-  const unformatDigits = (value) => {
-    return value ? String(value).replace(/\D/g, "") : "";
-  };
-
-  const formatCpf = (value) => {
-    if (!value) return "";
-    const digits = String(value).replace(/\D/g, "");
-    if (digits.length <= 3) return digits;
-    if (digits.length <= 6) return digits.replace(/(\d{3})(\d+)/, "$1.$2");
-    if (digits.length <= 9) return digits.replace(/(\d{3})(\d{3})(\d+)/, "$1.$2.$3");
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  };
-
-  const formatPhone = (value) => {
-    if (!value) return "";
-    const digits = String(value).replace(/\D/g, "");
-    if (digits.length <= 2) return digits;
-    const ddd = digits.slice(0, 2);
-    const rest = digits.slice(2);
-    if (rest.length <= 4) return `(${ddd}) ${rest}`;
-    if (digits.length === 11) {
-      const first = rest.slice(0, 5);
-      const last = rest.slice(5);
-      return `(${ddd}) ${first}-${last}`;
-    }
-    const first = rest.slice(0, rest.length - 4);
-    const last = rest.slice(-4);
-    return `(${ddd}) ${first}-${last}`;
-  };
-
-  const handleSave = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
     try {
-      if (role === "ROLE_PACIENTE") {
-        const payload = { ...form, cpf: unformatDigits(form.cpf), telefone: unformatDigits(form.telefone) };
-        const res = await atualizarPaciente(userId, payload);
-        setData(res.data);
-      } else if (role === "ROLE_DENTISTA") {
-        const res = await atualizarDentista(userId, form);
-        setData(res.data);
-      } else if (role === "ROLE_RECEPCIONISTA") {
-        const res = await atualizarRecepcionista(userId, form);
-        setData(res.data);
-      }
-      setMensagem("Perfil atualizado com sucesso!");
-      setTipoMensagem("success");
-      setTimeout(() => setEditando(false), 2000);
-      setTimeout(() => setMensagem(""), 2000);
+      const payload =
+        role === "ROLE_PACIENTE"
+          ? { ...form, cpf: somenteDigitos(form.cpf), telefone: somenteDigitos(form.telefone) }
+          : form;
+      const res = await config.atualizar(userId, payload);
+      setData(res.data);
+      setForm(montarForm(role, res.data));
+      setEditando(false);
+      setMensagem({ type: "success", text: "Perfil atualizado com sucesso!" });
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error.response?.data || error);
-      setMensagem(error.response?.data?.message || "Erro ao atualizar perfil. Verifique os dados.");
-      setTipoMensagem("danger");
-      setTimeout(() => setMensagem(""), 4000);
+      setMensagem({
+        type: "error",
+        text: error.response?.data?.message || "Erro ao atualizar perfil. Verifique os dados.",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (!userId) return <div className="p-10">Usuário não identificado.</div>;
-  if (!["ROLE_PACIENTE", "ROLE_DENTISTA", "ROLE_RECEPCIONISTA"].includes(role)) return <div className="p-10 text-red-600">Acesso negado. Role desconhecida.</div>;
+  const renderConteudo = () => {
+    if (loading) {
+      return (
+        <div className="py-10 text-center text-gray-500">
+          <div className="inline-flex items-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+            Carregando perfil...
+          </div>
+        </div>
+      );
+    }
 
-  if (loading) return <div className="p-10">Carregando perfil...</div>;
-  if (!data) return <div className="p-10">Nenhum perfil encontrado.</div>;
+    if (!userId || !config || erroCarregamento || !data) {
+      return (
+        <div className="py-8 text-center">
+          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">Perfil indisponível</h2>
+          <p className="text-sm text-gray-600">
+            {erroCarregamento || "Não foi possível identificar o usuário. Faça login novamente."}
+          </p>
+        </div>
+      );
+    }
 
-  return (
-    <div className="min-h-screen bg-slate-100 flex justify-center items-start py-12 px-4">
-      <div className="w-full max-w-2xl">
-        <div className="flex items-center justify-between bg-blue-600 text-white rounded-md p-3 mb-6 shadow-sm">
-          <h1 className="text-lg font-semibold">Gerenciar Perfil</h1>
-          <div style={{ width: 72 }} />
+    if (editando) {
+      return (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Rotulo label="Nome">
+              <input name="nome" value={form.nome} onChange={handleChange} className={inputClass} required />
+            </Rotulo>
+            <Rotulo label="E-mail">
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                readOnly
+                className={`${inputClass} bg-gray-50 text-gray-500 cursor-not-allowed`}
+              />
+              <span className="text-xs text-gray-500 mt-1 block">
+                O e-mail é usado para login e não pode ser alterado aqui.
+              </span>
+            </Rotulo>
+
+            {role === "ROLE_PACIENTE" && (
+              <>
+                <Rotulo label="CPF">
+                  <input name="cpf" value={form.cpf} onChange={handleChange} inputMode="numeric" className={inputClass} required />
+                </Rotulo>
+                <Rotulo label="Telefone">
+                  <input name="telefone" value={form.telefone} onChange={handleChange} inputMode="tel" className={inputClass} required />
+                </Rotulo>
+                <Rotulo label="Data de nascimento">
+                  <input type="date" name="dataNascimento" value={form.dataNascimento} onChange={handleChange} className={inputClass} />
+                </Rotulo>
+              </>
+            )}
+
+            {role === "ROLE_DENTISTA" && (
+              <>
+                <Rotulo label="CRO">
+                  <input name="cro" value={form.cro} onChange={handleChange} placeholder="Ex: 12345-PB" className={inputClass} required />
+                </Rotulo>
+                <Rotulo label="Especialidade">
+                  <input name="especialidade" value={form.especialidade} onChange={handleChange} className={inputClass} required />
+                </Rotulo>
+              </>
+            )}
+
+            {role === "ROLE_RECEPCIONISTA" && (
+              <Rotulo label="Turno">
+                <select name="turno" value={form.turno} onChange={handleChange} className={inputClass} required>
+                  <option value="" disabled>Selecione</option>
+                  {TURNOS.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </Rotulo>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-4 py-2 rounded-md bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Save size={18} />
+              {saving ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </div>
+        </form>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
+          <div className="w-14 h-14 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-lg font-semibold">
+            {iniciais(data.nome)}
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-gray-900">{data.nome}</p>
+            <span className="inline-flex mt-1 px-3 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-xs font-semibold">
+              {config.label}
+            </span>
+          </div>
         </div>
 
-        <div className="p-8 bg-white rounded-xl shadow-md w-full">
-        {mensagem && (
-          <div className={`mb-6 text-center py-2 rounded-lg text-white ${tipoMensagem === "success" ? "bg-green-600" : "bg-red-500"}`}>
-            {mensagem}
-          </div>
-        )}
-        {editando ? (
-          <div className="space-y-4">
-            <input name="nome" value={form.nome} onChange={handleChange} placeholder="Nome" className="w-full border px-3 py-2 rounded"/>
-            <input name="email" value={form.email} onChange={handleChange} placeholder="Email" className="w-full border px-3 py-2 rounded"/>
-            {role === "ROLE_PACIENTE" && (
-              <>
-                <input name="cpf" value={form.cpf} onChange={handleChange} placeholder="CPF" className="w-full border px-3 py-2 rounded"/>
-                <input name="telefone" value={form.telefone} onChange={handleChange} placeholder="Telefone" className="w-full border px-3 py-2 rounded"/>
-                <input type="date" name="dataNascimento" value={form.dataNascimento} onChange={handleChange} placeholder="Data Nasc." className="w-full border px-3 py-2 rounded"/>
-              </>
-            )}
-            {role === "ROLE_DENTISTA" && (
-              <>
-                <input name="cro" value={form.cro} onChange={handleChange} placeholder="CRO" className="w-full border px-3 py-2 rounded"/>
-                <input name="especialidade" value={form.especialidade} onChange={handleChange} placeholder="Especialidade" className="w-full border px-3 py-2 rounded"/>
-              </>
-            )}
-            {role === "ROLE_RECEPCIONISTA" && (
-              <input name="turno" value={form.turno} onChange={handleChange} placeholder="Turno" className="w-full border px-3 py-2 rounded"/>
-            )}
-            <div className="flex justify-center gap-2 mt-4">
-              <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>
-              <button onClick={() => setEditando(false)} className="bg-gray-300 text-black px-4 py-2 rounded">Cancelar</button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="mb-2"><strong>Nome:</strong> {data.nome}</p>
-            <p className="mb-2"><strong>Email:</strong> {data.email}</p>
-            {role === "ROLE_PACIENTE" && (
-              <>
-                  <p><strong>CPF:</strong> {formatCpf(data.cpf)}</p>
-                  <p><strong>Telefone:</strong> {formatPhone(data.telefone)}</p>
-                <p><strong>Data de Nascimento:</strong> {formatDate(data.dataNascimento)}</p>
-              </>
-            )}
-            {role === "ROLE_DENTISTA" && (
-              <>
-                <p><strong>CRO:</strong> {data.cro}</p>
-                <p><strong>Especialidade:</strong> {data.especialidade}</p>
-              </>
-            )}
-            {role === "ROLE_RECEPCIONISTA" && (
-              <p><strong>Turno:</strong> {data.turno}</p>
-            )}
-            <div className="mt-4 flex justify-center gap-2">
-              <button onClick={() => setEditando(true)} className="bg-blue-600 text-white px-4 py-2 rounded">Editar Perfil</button>
-              <button onClick={() => navigate('/dashboard')} className="bg-gray-200 px-4 py-2 rounded">Voltar</button>
-            </div>
-          </div>
-        )}
+        <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+          <Campo label="Nome">{data.nome}</Campo>
+          <Campo label="E-mail">{data.email}</Campo>
+          {role === "ROLE_PACIENTE" && (
+            <>
+              <Campo label="CPF">{formatCpf(data.cpf)}</Campo>
+              <Campo label="Telefone">{formatPhone(data.telefone)}</Campo>
+              <Campo label="Data de nascimento">{formatDate(data.dataNascimento)}</Campo>
+            </>
+          )}
+          {role === "ROLE_DENTISTA" && (
+            <>
+              <Campo label="CRO">{data.cro}</Campo>
+              <Campo label="Especialidade">{data.especialidade}</Campo>
+            </>
+          )}
+          {role === "ROLE_RECEPCIONISTA" && <Campo label="Turno">{formatTurno(data.turno)}</Campo>}
+        </dl>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setEditando(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+          >
+            <Pencil size={18} />
+            Editar perfil
+          </button>
+        </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-blue-100 rounded-lg flex items-center justify-center">
+              <UserCircle className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-800">Gerenciar Perfil</h1>
+              <p className="text-sm text-gray-500">
+                {editando ? "Atualize os seus dados cadastrais" : "Visualize os seus dados cadastrais"}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="self-start sm:self-auto flex items-center gap-2 bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:text-gray-800 px-4 py-2 rounded-lg transition-colors shadow-sm font-medium"
+          >
+            <ArrowLeft size={18} />
+            Voltar
+          </button>
+        </div>
+
+        {mensagem.text && (
+          <div
+            role="status"
+            className={`mb-4 px-4 py-2 rounded ${
+              mensagem.type === "error"
+                ? "bg-red-50 border border-red-200 text-red-700"
+                : "bg-green-50 border border-green-200 text-green-800"
+            }`}
+          >
+            {mensagem.text}
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">{renderConteudo()}</div>
+      </main>
     </div>
   );
 };
