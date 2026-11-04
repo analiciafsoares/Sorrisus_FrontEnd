@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import ConfirmModal from "../../components/ConfirmModal";
 import Toast from "../../components/Toast";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Users } from "lucide-react";
 
 const Paciente = () => {
   const [pacientes, setPacientes] = useState([]);
@@ -72,21 +72,26 @@ const Paciente = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-gray-800">Lista de Pacientes</h2>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+            <h1 className="text-2xl font-semibold text-gray-800">Lista de Pacientes</h1>
+          </div>
 
-          <div className="flex space-x-3">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <button
               onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2 bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:text-gray-800 px-4 py-2 rounded-lg transition-colors shadow-sm font-medium"
+              className="flex items-center justify-center gap-2 bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 hover:text-gray-800 px-4 py-2 rounded-lg transition-colors shadow-sm font-medium"
             >
               <ArrowLeft size={18} />
               Voltar
             </button>
             <button
               onClick={() => navigate("/pacientes/cadastrar/interno")}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md font-medium"
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md font-medium"
             >
               <Plus size={18} />
               Cadastrar Paciente
@@ -153,7 +158,7 @@ const Paciente = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </main>
 
       <ConfirmModal
         open={modalOpen}
