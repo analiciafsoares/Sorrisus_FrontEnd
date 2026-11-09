@@ -22,6 +22,13 @@ import NovoPaciente from "../pages/paciente/NovoPaciente.jsx";
 import DashboardPaciente from "../pages/dashboard/DashboardPaciente.jsx";
 import DashboardRedirect from "./DashboardRedirect.jsx";
 
+const ROLES_GESTAO_SERVICOS = [
+  "ROLE_DENTISTA",
+  "DENTISTA",
+  "ROLE_RECEPCIONISTA",
+  "RECEPCIONISTA",
+];
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -151,7 +158,7 @@ export default function AppRoutes() {
           <Route
             path="/servicos"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={ROLES_GESTAO_SERVICOS}>
                 <ServicoList />
               </PrivateRoute>
             }
@@ -159,7 +166,7 @@ export default function AppRoutes() {
           <Route
             path="/servicos/novo"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={ROLES_GESTAO_SERVICOS}>
                 <NovoServico />
               </PrivateRoute>
             }
@@ -167,7 +174,7 @@ export default function AppRoutes() {
           <Route
             path="/servicos/editar/:id"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={ROLES_GESTAO_SERVICOS}>
                 <EditarServico />
               </PrivateRoute>
             }

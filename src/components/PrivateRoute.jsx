@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const PrivateRoute = ({ children }) => {
+const PrivateRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -12,7 +12,24 @@ const PrivateRoute = ({ children }) => {
     );
   }
 
-  return user ? children : <Navigate to="/login" />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles?.length) {
+    const role = Array.isArray(user.role)
+      ? String(user.role[0] || "").toUpperCase()
+      : String(user.role?.name || user.role || "").toUpperCase();
+    const autorizado = allowedRoles
+      .map((allowedRole) => String(allowedRole).toUpperCase())
+      .includes(role);
+
+    if (!autorizado) {
+      return <Navigate to="/" replace />;
+    }
+  }
+
+  return children;
 };
 
 export default PrivateRoute;

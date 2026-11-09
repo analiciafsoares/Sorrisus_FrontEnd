@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listarServicos, excluirServico } from "../../services/servicoService";
+import { desativarServico, listarServicos } from "../../services/servicoService";
 import Navbar from "../../components/Navbar";
 import ConfirmModal from "../../components/ConfirmModal";
 import Toast from "../../components/Toast";
-import { ArrowLeft, Plus, Edit2, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit2, Plus, PowerOff, Stethoscope } from "lucide-react";
 
 export default function ServicoList() {
   const [servicos, setServicos] = useState([]);
@@ -32,7 +32,7 @@ export default function ServicoList() {
     carregar();
   }, []);
 
-  const abrirModalExcluir = (servico) => {
+  const abrirModalDesativar = (servico) => {
     setSelectedServico(servico);
     setModalOpen(true);
   };
@@ -42,17 +42,17 @@ export default function ServicoList() {
     setSelectedServico(null);
   };
 
-  const confirmarExclusao = async () => {
+  const confirmarDesativacao = async () => {
     if (!selectedServico) return;
     setProcessing(true);
     try {
-      await excluirServico(selectedServico.id);
-      setToast({ type: "success", message: "Serviço excluído com sucesso." });
+      await desativarServico(selectedServico.id);
+      setToast({ type: "success", message: "Serviço desativado com sucesso." });
       fecharModal();
       carregar();
     } catch (err) {
-      console.error("Erro ao excluir serviço:", err);
-      const msg = err?.response?.data?.message || "Erro ao excluir serviço.";
+      console.error("Erro ao desativar serviço:", err);
+      const msg = err?.response?.data?.message || "Erro ao desativar serviço.";
       setToast({ type: "error", message: msg });
     } finally {
       setProcessing(false);
@@ -63,22 +63,22 @@ export default function ServicoList() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6 max-w-4xl mx-auto">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <Plus className="text-blue-600" />
+            <div className="w-11 h-11 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Stethoscope className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-semibold text-gray-800">Serviços</h2>
+              <h1 className="text-2xl font-semibold text-gray-800">Serviços</h1>
               <p className="text-sm text-gray-500">Gerencie os procedimentos da clínica</p>
             </div>
           </div>
 
-          <div className="flex space-x-3">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <button
               onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2 bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors shadow-sm font-medium"
+              className="flex items-center justify-center gap-2 bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors shadow-sm font-medium"
             >
               <ArrowLeft size={18} />
               Voltar
@@ -86,7 +86,7 @@ export default function ServicoList() {
 
             <button
               onClick={() => navigate("/servicos/novo")}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md font-medium"
+              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md font-medium"
             >
               <Plus size={18} />
               Novo Serviço
@@ -94,15 +94,15 @@ export default function ServicoList() {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
+          <table className="w-full min-w-[760px] table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ativo</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                <th className="w-1/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                <th className="w-2/5 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                <th className="w-[15%] px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
+                <th className="w-[12%] px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ativo</th>
+                <th className="w-[13%] px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -116,7 +116,7 @@ export default function ServicoList() {
                 servicos.map((s) => (
                   <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{s.nome}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600 max-w-md truncate">{s.descricao || "-"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 truncate" title={s.descricao || undefined}>{s.descricao || "-"}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">R$ {Number(s.preco).toFixed(2)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                       {s.ativo ? (
@@ -134,13 +134,15 @@ export default function ServicoList() {
                         >
                           <Edit2 size={18} />
                         </button>
-                        <button
-                          onClick={() => abrirModalExcluir(s)}
-                          className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-all"
-                          title="Excluir"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        {s.ativo && (
+                          <button
+                            onClick={() => abrirModalDesativar(s)}
+                            className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 transition-all"
+                            title="Desativar"
+                          >
+                            <PowerOff size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -149,14 +151,14 @@ export default function ServicoList() {
             </tbody>
           </table>
         </div>
-      </div>
+      </main>
 
       <ConfirmModal
         open={modalOpen}
-        title="Excluir serviço"
-        description={selectedServico ? `Deseja realmente excluir o serviço "${selectedServico.nome}"? Esta ação não pode ser desfeita.` : "Deseja realmente excluir este serviço?"}
+        title="Desativar serviço"
+        description={selectedServico ? `Deseja desativar o serviço "${selectedServico.nome}"? Ele deixará de estar disponível para novos usos e poderá ser reativado pela edição.` : "Deseja desativar este serviço?"}
         onCancel={fecharModal}
-        onConfirm={confirmarExclusao}
+        onConfirm={confirmarDesativacao}
         loading={processing}
       />
 

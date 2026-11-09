@@ -31,6 +31,10 @@ export const listarConsultasPorDentista = (dentistaId) => {
   return api.get(`/consultas/dentista/${dentistaId}`);
 };
 
+export const listarConsultasParaRecepcao = () => {
+  return api.get("/consultas/historico/recepcao");
+};
+
 export const buscarConsultaPorId = (id) => {
  
   return api.get(`/consultas/${id}`);

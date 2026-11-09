@@ -15,7 +15,7 @@ const toInputDateTime = (isoString) => {
   if (!isoString) return "";
   const s = isoString.split(".")[0];
 
-  if (/[zZ]|[+\-]\d{2}:\d{2}$/.test(isoString)) {
+  if (/[zZ]|[+-]\d{2}:\d{2}$/.test(isoString)) {
     const d = new Date(isoString);
     const pad = (n) => String(n).padStart(2, "0");
     const yyyy = d.getFullYear();
@@ -65,7 +65,7 @@ export default function AgendamentoForm({ agendamentoId }) {
         ]);
         setPacientes(pRes.data || []);
         setDentistas(dRes.data || []);
-        setServicos(sRes.data || []);
+        const todosServicos = Array.isArray(sRes.data) ? sRes.data : [];
         if (agendamentoId) {
           const resp = await buscarAgendamentoPorId(agendamentoId);
           const ag = resp.data;
@@ -74,6 +74,13 @@ export default function AgendamentoForm({ agendamentoId }) {
           setDentistaId(ag.dentistaId ?? "");
           setServicoId(ag.servicoId ?? "");
           setObservacao(ag.observacao ?? "");
+          setServicos(
+            todosServicos.filter(
+              (servico) => servico.ativo || Number(servico.id) === Number(ag.servicoId)
+            )
+          );
+        } else {
+          setServicos(todosServicos.filter((servico) => servico.ativo));
         }
       } catch (err) {
         console.error("Erro ao carregar dados do formulário", err);
@@ -204,7 +211,9 @@ export default function AgendamentoForm({ agendamentoId }) {
                   >
                     <option value="">Selecione (opcional)</option>
                     {servicos.map((s) => (
-                      <option key={s.id} value={s.id}>{s.nome || s.descricao}</option>
+                      <option key={s.id} value={s.id}>
+                        {s.nome || s.descricao}{s.ativo ? "" : " (inativo)"}
+                      </option>
                     ))}
                   </select>
                 </label>

@@ -16,6 +16,6 @@ export const atualizarServico = (id, dados) => {
   return api.put(`/servicos/${id}`, dados);
 };
 
-export const excluirServico = (id) => {
+export const desativarServico = (id) => {
   return api.delete(`/servicos/${id}`);
 };

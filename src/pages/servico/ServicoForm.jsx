@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listarServicos, criarServico, atualizarServico, buscarServicoPorId } from "../../services/servicoService";
+import { criarServico, atualizarServico, buscarServicoPorId } from "../../services/servicoService";
 
 export default function ServicoForm({ servicoId }) {
   const navigate = useNavigate();
@@ -92,7 +92,7 @@ export default function ServicoForm({ servicoId }) {
       {loading ? (
         <div className="text-center py-8 text-gray-500">Carregando...</div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form id="servico-form" onSubmit={handleSubmit} className="space-y-6">
           {toast.message && (
             <div className={`px-4 py-2 rounded ${toast.type === "error" ? "bg-red-50 border border-red-200 text-red-700" : "bg-green-50 border border-green-200 text-green-800"}`}>
               {toast.message}

@@ -33,10 +33,8 @@ export default function EditarServico() {
               </button>
 
               <button
-                onClick={() => {
-                  const evt = new CustomEvent("servico:submit");
-                  window.dispatchEvent(evt);
-                }}
+                type="submit"
+                form="servico-form"
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md font-medium"
               >
                 <Save size={16} />
