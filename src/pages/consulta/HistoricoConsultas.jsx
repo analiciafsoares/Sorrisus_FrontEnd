@@ -1,80 +1,122 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  cancelarConsulta,
   listarConsultasParaRecepcao,
   listarConsultasPorDentista,
   listarConsultasPorPaciente,
+  registrarNaoComparecimento,
 } from "../../services/consultaService";
 import { jwtDecode } from "jwt-decode";
 import Navbar from "../../components/Navbar";
 import StatusBadge from "../../components/StatusBadge";
+import ConfirmModal from "../../components/ConfirmModal";
+import Toast from "../../components/Toast";
 import { formatarData } from "../../utils/formatters";
-import { ArrowLeft, ClipboardList, History } from "lucide-react";
+import { ArrowLeft, ClipboardList, History, UserX, XCircle } from "lucide-react";
+
+const ACOES = {
+  naoCompareceu: {
+    titulo: "Registrar não comparecimento",
+    descricao: "A consulta será marcada como \"Não compareceu\". Use esta opção quando o paciente faltar sem avisar.",
+    executar: registrarNaoComparecimento,
+    sucesso: "Não comparecimento registrado.",
+  },
+  cancelar: {
+    titulo: "Cancelar consulta",
+    descricao: "A consulta ficará registrada como cancelada e o horário será liberado.",
+    executar: cancelarConsulta,
+    sucesso: "Consulta cancelada.",
+  },
+};
+
+const horarioJaPassou = (consulta) => new Date(consulta.dataHora) < new Date();
 
 const HistoricoConsultas = () => {
   const navigate = useNavigate();
   const [consultas, setConsultas] = useState([]);
   const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(true);
+  const [acaoPendente, setAcaoPendente] = useState(null);
+  const [processando, setProcessando] = useState(false);
+  const [toast, setToast] = useState({ type: null, message: null });
 
   const navegarParaAnamnese = (idConsulta) => {
     navigate(`/dentista/anamnese/${idConsulta}`);
   };
 
-  useEffect(() => {
-    const carregarConsultas = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-
-        const decoded = jwtDecode(token);
-        let role = "";
-        if (decoded.role) role = decoded.role;
-        else if (decoded.roles) role = Array.isArray(decoded.roles) ? decoded.roles[0] : decoded.roles;
-        else if (decoded.authorities) role = Array.isArray(decoded.authorities) ? decoded.authorities[0] : decoded.authorities;
-        role = String(role || "").toUpperCase();
-        setUserRole(role);
-
-        const userId = decoded.userId || decoded.id || decoded.sub || Number(localStorage.getItem("userId")) || null;
-        if (!userId) {
-          setConsultas([]);
-          setLoading(false);
-          return;
-        }
-
-        let data = [];
-        if (role.includes("PACIENTE")) {
-          const res = await listarConsultasPorPaciente(localStorage.getItem("userId"));
-          data = Array.isArray(res.data) ? res.data : (res.data?.content || res.data?.data || []);
-        } else if (role.includes("DENTISTA")) {
-          const res = await listarConsultasPorDentista(localStorage.getItem("userId"));
-          data = Array.isArray(res.data) ? res.data : (res.data?.content || res.data?.data || []);
-        } else if (role.includes("RECEPCIONISTA")) {
-          const res = await listarConsultasParaRecepcao();
-          data = Array.isArray(res.data) ? res.data : (res.data?.content || res.data?.data || []);
-        } else {
-          data = [];
-        }
-
-        setConsultas(data);
-      } catch (error) {
-        console.error("Erro ao carregar histórico:", error);
-        setConsultas([]);
-      } finally {
+  const carregarConsultas = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
         setLoading(false);
+        return;
       }
-    };
 
-    carregarConsultas();
+      const decoded = jwtDecode(token);
+      let role = "";
+      if (decoded.role) role = decoded.role;
+      else if (decoded.roles) role = Array.isArray(decoded.roles) ? decoded.roles[0] : decoded.roles;
+      else if (decoded.authorities) role = Array.isArray(decoded.authorities) ? decoded.authorities[0] : decoded.authorities;
+      role = String(role || "").toUpperCase();
+      setUserRole(role);
+
+      const userId = decoded.userId || decoded.id || decoded.sub || Number(localStorage.getItem("userId")) || null;
+      if (!userId) {
+        setConsultas([]);
+        setLoading(false);
+        return;
+      }
+
+      let data = [];
+      if (role.includes("PACIENTE")) {
+        const res = await listarConsultasPorPaciente(localStorage.getItem("userId"));
+        data = Array.isArray(res.data) ? res.data : (res.data?.content || res.data?.data || []);
+      } else if (role.includes("DENTISTA")) {
+        const res = await listarConsultasPorDentista(localStorage.getItem("userId"));
+        data = Array.isArray(res.data) ? res.data : (res.data?.content || res.data?.data || []);
+      } else if (role.includes("RECEPCIONISTA")) {
+        const res = await listarConsultasParaRecepcao();
+        data = Array.isArray(res.data) ? res.data : (res.data?.content || res.data?.data || []);
+      } else {
+        data = [];
+      }
+
+      setConsultas(data);
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+      setConsultas([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    carregarConsultas();
+  }, [carregarConsultas]);
+
+  const executarAcao = async () => {
+    if (!acaoPendente) return;
+    const acao = ACOES[acaoPendente.tipo];
+    setProcessando(true);
+    try {
+      await acao.executar(acaoPendente.consultaId);
+      setToast({ type: "success", message: acao.sucesso });
+      setAcaoPendente(null);
+      carregarConsultas();
+    } catch (err) {
+      console.error("Erro ao atualizar consulta:", err);
+      setToast({ type: "error", message: err?.response?.data?.message || "Não foi possível atualizar a consulta." });
+    } finally {
+      setProcessando(false);
+    }
+  };
 
   const isDentista = userRole && userRole.includes("DENTISTA");
   const isRecepcionista = userRole && userRole.includes("RECEPCIONISTA");
-  const totalColunas = isDentista || isRecepcionista ? 5 : 4;
+  const podeGerenciar = isDentista || isRecepcionista;
+  const totalColunas = isRecepcionista ? 6 : isDentista ? 5 : 4;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -116,8 +158,8 @@ const HistoricoConsultas = () => {
 
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Observação</th>
-                {isDentista && (
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Anamnese</th>
+                {podeGerenciar && (
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 )}
               </tr>
             </thead>
@@ -154,15 +196,38 @@ const HistoricoConsultas = () => {
                       {c.observacao || "-"}
                     </td>
 
-                    {isDentista && (
+                    {podeGerenciar && (
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                        <button
-                          onClick={() => navegarParaAnamnese(c.id)}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded bg-teal-500 hover:bg-teal-600 text-white text-xs font-medium transition-colors shadow-sm"
-                        >
-                          <ClipboardList size={14} />
-                          Anamnese
-                        </button>
+                        <div className="flex justify-center items-center gap-2">
+                          {isDentista && (
+                            <button
+                              onClick={() => navegarParaAnamnese(c.id)}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded bg-teal-500 hover:bg-teal-600 text-white text-xs font-medium transition-colors shadow-sm"
+                            >
+                              <ClipboardList size={14} />
+                              Anamnese
+                            </button>
+                          )}
+                          {c.status === "CONFIRMADA" && horarioJaPassou(c) && (
+                            <button
+                              onClick={() => setAcaoPendente({ tipo: "naoCompareceu", consultaId: c.id })}
+                              title="Registrar não comparecimento"
+                              className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+                            >
+                              <UserX size={18} />
+                            </button>
+                          )}
+                          {c.status === "CONFIRMADA" && !horarioJaPassou(c) && (
+                            <button
+                              onClick={() => setAcaoPendente({ tipo: "cancelar", consultaId: c.id })}
+                              title="Cancelar consulta"
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50"
+                            >
+                              <XCircle size={18} />
+                            </button>
+                          )}
+                          {!isDentista && c.status !== "CONFIRMADA" && <span className="text-gray-400">-</span>}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -172,6 +237,17 @@ const HistoricoConsultas = () => {
           </table>
         </div>
       </main>
+
+      <ConfirmModal
+        open={Boolean(acaoPendente)}
+        title={acaoPendente ? ACOES[acaoPendente.tipo].titulo : ""}
+        description={acaoPendente ? ACOES[acaoPendente.tipo].descricao : ""}
+        onCancel={() => setAcaoPendente(null)}
+        onConfirm={executarAcao}
+        loading={processando}
+      />
+
+      <Toast type={toast.type} message={toast.message} onClose={() => setToast({ type: null, message: null })} />
     </div>
   );
 };

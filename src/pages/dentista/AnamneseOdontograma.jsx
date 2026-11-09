@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { 
-    Stethoscope, FileText, Pill, Heart, AlertTriangle, MessageSquare, 
-    ClipboardList, ArrowLeft 
+import {
+    Stethoscope, FileText, Pill, Heart, AlertTriangle, MessageSquare,
+    ClipboardList, ArrowLeft, CheckCircle
 } from 'lucide-react';
 import React from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import { buscarConsultaPorId } from '../../services/consultaService';
+import ConfirmModal from '../../components/ConfirmModal';
+import { buscarConsultaPorId, finalizarConsulta } from '../../services/consultaService';
 import { salvarProntuario, buscarProntuarioPorConsulta } from '../../services/prontuarioService';
 import { buscarPacientePorId } from '../../services/pacienteService';
 
@@ -185,6 +186,12 @@ const AnamneseOdontograma = () => {
     const [mensagem, setMensagem] = useState("");
     const [tipoMensagem, setTipoMensagem] = useState("");
 
+    // Estado da consulta, usado para habilitar a finalização do atendimento
+    const [statusConsulta, setStatusConsulta] = useState(null);
+    const [dataHoraConsulta, setDataHoraConsulta] = useState(null);
+    const [confirmarFinalizacao, setConfirmarFinalizacao] = useState(false);
+    const [finalizando, setFinalizando] = useState(false);
+
     const [anamnese, setAnamnese] = useState({
         pacienteId: "",
         pacienteNome: "Carregando...",
@@ -216,7 +223,9 @@ const AnamneseOdontograma = () => {
             try {
                 const resConsulta = await buscarConsultaPorId(consultaId);
                 const consulta = Array.isArray(resConsulta.data) ? resConsulta.data[0] : resConsulta.data;
-                
+                setStatusConsulta(consulta.status);
+                setDataHoraConsulta(consulta.dataHora);
+
                 let nomePaciente = "Paciente não identificado";
                 let idPacienteEncontrado = "";
 
@@ -387,6 +396,26 @@ const AnamneseOdontograma = () => {
                 setMensagem("");
                 setTipoMensagem("");
             }, 10000);
+        }
+    };
+
+    const horarioChegou = dataHoraConsulta && new Date(dataHoraConsulta) <= new Date();
+
+    const handleFinalizar = async () => {
+        setFinalizando(true);
+        try {
+            const res = await finalizarConsulta(consultaId);
+            setStatusConsulta(res.data?.status || "REALIZADA");
+            setMensagem("Atendimento finalizado. A consulta foi registrada como realizada.");
+            setTipoMensagem("success");
+        } catch (error) {
+            console.error(error);
+            setMensagem(error?.response?.data?.message || "Erro ao finalizar o atendimento.");
+            setTipoMensagem("danger");
+        } finally {
+            setFinalizando(false);
+            setConfirmarFinalizacao(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
@@ -563,17 +592,51 @@ const AnamneseOdontograma = () => {
 
 
                     {/* BOTÃO SALVAR (AZUL) */}
-                    <div className="pt-4">
+                    <div className="pt-4 space-y-3">
                         <button
                             type="submit"
                             className="w-full py-3 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30"
                         >
                             Salvar Anamnese
                         </button>
+
+                        {/* FINALIZAR ATENDIMENTO: só para consultas confirmadas cujo horário já chegou */}
+                        {statusConsulta === "CONFIRMADA" && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmarFinalizacao(true)}
+                                    disabled={!horarioChegou || finalizando}
+                                    className="w-full py-3 inline-flex items-center justify-center gap-2 bg-white border border-green-600 text-green-700 hover:bg-green-50 transition duration-200 font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <CheckCircle size={18} />
+                                    Finalizar atendimento
+                                </button>
+                                {!horarioChegou && (
+                                    <p className="text-sm text-gray-500 text-center">
+                                        O atendimento poderá ser finalizado a partir do horário da consulta.
+                                    </p>
+                                )}
+                            </>
+                        )}
+                        {statusConsulta === "REALIZADA" && (
+                            <p className="text-sm text-green-700 text-center font-medium">
+                                Atendimento finalizado: esta consulta está registrada como realizada.
+                            </p>
+                        )}
                     </div>
 
                 </form>
             </div>
+
+            <ConfirmModal
+                open={confirmarFinalizacao}
+                title="Finalizar atendimento"
+                description="Salve a ficha antes de finalizar. A consulta será registrada como realizada e passará a contar para o controle de retornos."
+                onCancel={() => setConfirmarFinalizacao(false)}
+                onConfirm={handleFinalizar}
+                loading={finalizando}
+            />
         </div>
     );
 };

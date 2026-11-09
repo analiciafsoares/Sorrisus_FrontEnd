@@ -30,6 +30,10 @@ export const confirmarAgendamento = (id) => {
   return api.post(`${ENDPOINT}/${id}/confirmar`);
 };
 
+export const cancelarAgendamento = (id) => {
+  return api.post(`${ENDPOINT}/${id}/cancelar`);
+};
+
 export const listarAgendamentosPorPaciente = (pacienteId) => {
   return api.get(`${ENDPOINT}/paciente/${pacienteId}`);
 };

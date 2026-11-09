@@ -21,6 +21,14 @@ export const cancelarConsulta = (id) => {
   return api.delete(`/consultas/${id}`);
 };
 
+export const finalizarConsulta = (id) => {
+  return api.post(`/consultas/${id}/finalizar`);
+};
+
+export const registrarNaoComparecimento = (id) => {
+  return api.post(`/consultas/${id}/nao-compareceu`);
+};
+
 export const listarConsultasPorPaciente = (pacienteId) => {
  
   return api.get(`/consultas/paciente/${pacienteId}`);
