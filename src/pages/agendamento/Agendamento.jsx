@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   listarAgendamentosPorDentista,
-  deletarAgendamento,
+  cancelarAgendamento,
   confirmarAgendamento,
   listarAgendamentosPorPaciente
 } from "../../services/agendamentoService";
@@ -16,10 +16,18 @@ import {
   Calendar,
   CheckCircle,
   Edit2,
-  Trash2,
+  XCircle,
   Clock,
   User
 } from "lucide-react";
+
+const STATUS_AGENDAMENTO = {
+  PENDENTE: { label: "Pendente", Icone: Clock, className: "bg-yellow-50 text-yellow-700 border border-yellow-200" },
+  CONFIRMADO: { label: "Confirmado", Icone: CheckCircle, className: "bg-green-100 text-green-800 border border-green-200" },
+  CANCELADO: { label: "Cancelado", Icone: XCircle, className: "bg-red-50 text-red-700 border border-red-200" },
+};
+
+const statusDoAgendamento = (ag) => ag.status || (ag.confirmado ? "CONFIRMADO" : "PENDENTE");
 
 const Agendamento = () => {
   const [agendamentos, setAgendamentos] = useState([]);
@@ -30,6 +38,8 @@ const Agendamento = () => {
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState({ type: null, message: null });
   const navigate = useNavigate();
+  const role = localStorage.getItem("role") || "";
+  const podeGerenciar = role.includes("DENTISTA") || role.includes("RECEPCIONISTA");
 
   const carregarAgendamentos = async () => {
     setLoading(true);
@@ -95,9 +105,9 @@ const Agendamento = () => {
     carregarAgendamentos();
   }, []);
 
-  const openDeleteModal = (id) => {
+  const openCancelModal = (id) => {
     setSelectedId(id);
-    setModalAction("delete");
+    setModalAction("cancel");
     setModalOpen(true);
   };
 
@@ -117,8 +127,8 @@ const Agendamento = () => {
     if (!selectedId || !modalAction) return;
     setProcessing(true);
     try {
-      if (modalAction === "delete") {
-        await deletarAgendamento(selectedId);
+      if (modalAction === "cancel") {
+        await cancelarAgendamento(selectedId);
         setToast({ type: "success", message: "Agendamento cancelado com sucesso." });
       } else {
         await confirmarAgendamento(selectedId);
@@ -172,13 +182,15 @@ const Agendamento = () => {
               <ArrowLeft size={18} />
               Voltar
             </button>
-            <button
-              onClick={() => navigate("/agendamentos/novo")}
-              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md font-medium"
-            >
-              <Plus size={18} />
-              Novo Agendamento
-            </button>
+            {podeGerenciar && (
+              <button
+                onClick={() => navigate("/agendamentos/novo")}
+                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md font-medium"
+              >
+                <Plus size={18} />
+                Novo Agendamento
+              </button>
+            )}
           </div>
         </div>
 
@@ -189,7 +201,7 @@ const Agendamento = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data / Hora</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paciente</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Observação</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>                
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
@@ -201,45 +213,54 @@ const Agendamento = () => {
                   <td colSpan="5" className="px-6 py-8 text-center text-gray-500">Nenhum agendamento encontrado.</td>
                 </tr>
               ) : (
-                agendamentos.map((ag) => (
-                  <tr key={ag.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      <div className="flex items-center gap-2 font-medium">
-                        <Clock size={16} className="text-blue-500" />
-                        {formatarData(ag.dataHora)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
-                          <User size={14} />
+                agendamentos.map((ag) => {
+                  const status = statusDoAgendamento(ag);
+                  const { label, Icone, className } = STATUS_AGENDAMENTO[status] || STATUS_AGENDAMENTO.PENDENTE;
+                  return (
+                    <tr key={ag.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <div className="flex items-center gap-2 font-medium">
+                          <Clock size={16} className="text-blue-500" />
+                          {formatarData(ag.dataHora)}
                         </div>
-                        {ag.paciente?.nome || `Paciente #${ag.pacienteId}` || "Paciente não identificado"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{ag.observacao || "Sem observações"}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${ag.confirmado ? "bg-green-100 text-green-800 border border-green-200" : "bg-yellow-50 text-yellow-700 border border-yellow-200"}`}>
-                        {ag.confirmado ? <><CheckCircle size={14} /> Confirmado</> : <><Clock size={14} /> Pendente</>}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                      <div className="flex justify-center items-center space-x-2">
-                        {!ag.confirmado && (
-                          <button onClick={() => openConfirmModal(ag.id)} title="Confirmar" className="p-2 rounded-lg text-green-600 hover:bg-green-50">
-                            <CheckCircle size={18} />
-                          </button>
-                        )}
-                        <button onClick={() => navigate(`/agendamentos/editar/${ag.id}`)} title="Editar" className="p-2 rounded-lg text-blue-600 hover:bg-blue-50">
-                          <Edit2 size={18} />
-                        </button>
-                        <button onClick={() => openDeleteModal(ag.id)} title="Excluir" className="p-2 rounded-lg text-red-600 hover:bg-red-50">
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                            <User size={14} />
+                          </div>
+                          {ag.paciente?.nome || `Paciente #${ag.pacienteId}` || "Paciente não identificado"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{ag.observacao || "Sem observações"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${className}`}>
+                          <Icone size={14} /> {label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <div className="flex justify-center items-center space-x-2">
+                          {podeGerenciar && status === "PENDENTE" && (
+                            <>
+                              <button onClick={() => openConfirmModal(ag.id)} title="Confirmar" className="p-2 rounded-lg text-green-600 hover:bg-green-50">
+                                <CheckCircle size={18} />
+                              </button>
+                              <button onClick={() => navigate(`/agendamentos/editar/${ag.id}`)} title="Editar" className="p-2 rounded-lg text-blue-600 hover:bg-blue-50">
+                                <Edit2 size={18} />
+                              </button>
+                            </>
+                          )}
+                          {podeGerenciar && status !== "CANCELADO" && (
+                            <button onClick={() => openCancelModal(ag.id)} title="Cancelar" className="p-2 rounded-lg text-red-600 hover:bg-red-50">
+                              <XCircle size={18} />
+                            </button>
+                          )}
+                          {(!podeGerenciar || status === "CANCELADO") && <span className="text-gray-400">-</span>}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -248,8 +269,12 @@ const Agendamento = () => {
 
       <ConfirmModal
         open={modalOpen}
-        title={modalAction === "delete" ? "Cancelar agendamento" : "Confirmar agendamento"}
-        description={modalAction === "delete" ? "Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita." : "Deseja confirmar este agendamento?"}
+        title={modalAction === "cancel" ? "Cancelar agendamento" : "Confirmar agendamento"}
+        description={
+          modalAction === "cancel"
+            ? "O agendamento ficará registrado como cancelado e o horário será liberado. Se ele já estiver confirmado, a consulta também será cancelada."
+            : "Deseja confirmar este agendamento?"
+        }
         onCancel={handleModalCancel}
         onConfirm={handleModalConfirm}
         loading={processing}
