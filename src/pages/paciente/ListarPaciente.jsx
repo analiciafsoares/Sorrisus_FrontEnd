@@ -1,10 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listarPacientes, deletarPaciente } from "../../services/pacienteService";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import ConfirmModal from "../../components/ConfirmModal";
 import Toast from "../../components/Toast";
-import { ArrowLeft, Plus, Users } from "lucide-react";
+import { ArrowLeft, Plus, Search, Users, X } from "lucide-react";
+
+const normalizarTexto = (valor) =>
+  String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const somenteDigitos = (valor) => String(valor ?? "").replace(/\D/g, "");
 
 const Paciente = () => {
   const [pacientes, setPacientes] = useState([]);
@@ -13,6 +21,7 @@ const Paciente = () => {
   const [selectedPaciente, setSelectedPaciente] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState({ type: null, message: null });
+  const [busca, setBusca] = useState("");
 
   const navigate = useNavigate();
 
@@ -32,6 +41,17 @@ const Paciente = () => {
   useEffect(() => {
     carregarPacientes();
   }, []);
+
+  const pacientesFiltrados = useMemo(() => {
+    const termo = normalizarTexto(busca.trim());
+    if (!termo) return pacientes;
+    const digitos = somenteDigitos(termo);
+    return pacientes.filter((p) =>
+      normalizarTexto(p.nome).includes(termo) ||
+      normalizarTexto(p.email).includes(termo) ||
+      (digitos && (somenteDigitos(p.cpf).includes(digitos) || somenteDigitos(p.telefone).includes(digitos)))
+    );
+  }, [pacientes, busca]);
 
   const abrirModalExcluir = (paciente) => {
     setSelectedPaciente(paciente);
@@ -99,6 +119,35 @@ const Paciente = () => {
           </div>
         </div>
 
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="search"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar por nome, e-mail, CPF ou telefone"
+              aria-label="Buscar paciente"
+              className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-9 text-sm text-gray-700 shadow-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {busca && (
+              <button
+                type="button"
+                onClick={() => setBusca("")}
+                aria-label="Limpar busca"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {!loading && busca.trim() && (
+            <p className="text-sm text-gray-500">
+              {pacientesFiltrados.length} de {pacientes.length} paciente(s)
+            </p>
+          )}
+        </div>
+
         <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -114,14 +163,14 @@ const Paciente = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr><td colSpan="6" className="text-center py-4 text-gray-500">Carregando...</td></tr>
-              ) : pacientes.length === 0 ? (
+              ) : pacientesFiltrados.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    Nenhum paciente encontrado.
+                    {busca.trim() ? `Nenhum paciente encontrado para "${busca.trim()}".` : "Nenhum paciente encontrado."}
                   </td>
                 </tr>
               ) : (
-                pacientes.map((p) => (
+                pacientesFiltrados.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.nome}</td>

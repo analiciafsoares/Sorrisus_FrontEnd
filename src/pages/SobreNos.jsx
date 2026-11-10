@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Heart, Eye, Star, Stethoscope, Award, Calendar, Image as ImageIcon } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 const SobreNos = () => {
+    const { hash } = useLocation();
+
+    useEffect(() => {
+        if (!hash) return;
+        document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, [hash]);
+
     const especialistas = [
         {
             nome: 'Dr(a). Luiza Bianca',
@@ -93,7 +101,7 @@ const SobreNos = () => {
             </section>
 
             {/* Equipe */}
-            <section className="py-24 px-4 max-w-7xl mx-auto">
+            <section id="corpo-clinico" className="py-24 px-4 max-w-7xl mx-auto scroll-mt-4">
                 <div className="text-center mb-16 space-y-4">
                     <h2 className="text-4xl font-extrabold text-gray-900">Corpo Clínico</h2>
                     <p className="text-gray-500 max-w-2xl mx-auto">Especialistas prontos para cuidar de você.</p>
@@ -102,9 +110,9 @@ const SobreNos = () => {
                     {especialistas.map((dentista, index) => (
                         <div key={index} className="group text-center">
                             <div className="w-full aspect-[4/5] rounded-3xl mb-6 overflow-hidden shadow-lg border-2 border-transparent group-hover:border-blue-400 transition-all duration-300">
-                                <img 
-                                    src={dentista.foto} 
-                                    alt={dentista.nome} 
+                                <img
+                                    src={dentista.foto}
+                                    alt={dentista.nome}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                     onError={(e) => {
                                         e.target.src = "https://via.placeholder.com/400x500?text=Foto+Indisponível";
@@ -147,12 +155,12 @@ const SobreNos = () => {
                     </div>
                 </div>
             </section>
-            
+
             {/* Rodapé */}
             <p className="text-center text-sm text-gray-500 mt-6 mb-4">
-            © 2025 Sorrisus. Todos os direitos reservados.
+                © 2025 Sorrisus. Todos os direitos reservados.
             </p>
-            
+
         </div>
     );
 };

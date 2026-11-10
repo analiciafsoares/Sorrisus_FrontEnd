@@ -9,11 +9,5 @@ export const buscarProntuarioPorConsulta = (consultaId) => {
 };
 
 export const atualizarProntuario = (id, dados) => {
-  const token = localStorage.getItem("accessToken");
-
-  return api.put(`/prontuarios/${id}`, dados, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  return api.put(`/prontuarios/${id}`, dados);
 };

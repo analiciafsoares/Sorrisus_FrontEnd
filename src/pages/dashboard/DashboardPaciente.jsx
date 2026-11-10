@@ -6,6 +6,7 @@ import { listarConsultasPorPaciente } from "../../services/consultaService";
 import { listarServicos } from "../../services/servicoService";
 import { UserCog, Calendar, ClipboardList } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { getUserId } from "../../services/authService";
 
 export default function DashboardPaciente() {
   const { user } = useAuth();
@@ -19,17 +20,8 @@ export default function DashboardPaciente() {
   const getCurrentUserId = () => {
     if (user?.id) return user.id;
     if (user?.userId) return user.userId;
-    const fromStorage = localStorage.getItem("userId") || localStorage.getItem("id");
+    const fromStorage = getUserId();
     if (fromStorage) return Number(fromStorage);
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.id) return parsed.id;
-        if (parsed?.userId) return parsed.userId;
-      }
-    } catch (e) {
-    }
     return null;
   };
 
@@ -110,7 +102,7 @@ export default function DashboardPaciente() {
             </div>
             <div className="mt-4">
               <button
-                onClick={() => navigate("/dentistas")}
+                onClick={() => navigate("/sobre-nos#corpo-clinico")}
                 className="text-sm text-blue-600 hover:underline"
               >
                 Ver dentistas

@@ -1,4 +1,10 @@
+import { jwtDecode } from "jwt-decode";
 import api from "./api";
+
+const storage = window.sessionStorage;
+const CHAVES_SESSAO = ["token", "user", "role", "userId"];
+
+CHAVES_SESSAO.forEach((chave) => localStorage.removeItem(chave));
 
 export const login = async (email, password) => {
   const response = await api.post("/auth/login", { email, password });
@@ -6,35 +12,51 @@ export const login = async (email, password) => {
 };
 
 export const logout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  localStorage.removeItem("role");
-  localStorage.removeItem("userId");
+  CHAVES_SESSAO.forEach((chave) => storage.removeItem(chave));
+};
+
+export const getToken = () => {
+  return storage.getItem("token");
+};
+
+const tokenExpirado = (token) => {
+  try {
+    const { exp } = jwtDecode(token);
+    return exp ? exp * 1000 <= Date.now() : false;
+  } catch {
+    return true;
+  }
 };
 
 export const isAuthenticated = () => {
-  return !!localStorage.getItem("token");
+  const token = getToken();
+  if (!token) return false;
+  if (tokenExpirado(token)) {
+    logout();
+    return false;
+  }
+  return true;
 };
 
 export const getUser = () => {
-  const user = localStorage.getItem("user");
+  const user = storage.getItem("user");
   return user ? JSON.parse(user) : null;
 };
 
 export const getRole = () => {
-  return localStorage.getItem("role");
+  return storage.getItem("role");
 };
 
 export const getUserId = () => {
-  return localStorage.getItem("userId");
+  return storage.getItem("userId");
 };
 
 export const setAuthData = (authData) => {
-  localStorage.setItem("token", authData.accessToken);
-  localStorage.setItem("user", JSON.stringify({
+  storage.setItem("token", authData.accessToken);
+  storage.setItem("user", JSON.stringify({
     email: authData.email,
     role: authData.role
   }));
-  localStorage.setItem("role", authData.role);
-  localStorage.setItem("userId", authData.userId);
+  storage.setItem("role", authData.role);
+  storage.setItem("userId", authData.userId);
 };
