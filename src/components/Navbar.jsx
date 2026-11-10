@@ -58,54 +58,66 @@ const Navbar = () => {
             <div className="flex min-w-0 flex-1 flex-nowrap items-center justify-center gap-4 xl:gap-5 2xl:gap-7">
               <Link
                 to={dashboardPath}
+                title="Dashboard"
+                aria-label="Dashboard"
                 className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
               >
                 <Home className="w-5 h-5" />
-                <span className="font-medium">Dashboard</span>
+                <span className="hidden font-medium xl:inline">Dashboard</span>
               </Link>
 
               {!isPaciente() && (
                 <Link
                   to="/pacientes"
+                  title="Pacientes"
+                  aria-label="Pacientes"
                   className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
                 >
                   <Users className="w-5 h-5" />
-                  <span className="font-medium">Pacientes</span>
+                  <span className="hidden font-medium xl:inline">Pacientes</span>
                 </Link>
               )}
 
               {podeVisualizarRetornos() && (
                 <Link
                   to="/retornos-pendentes"
+                  title="Retornos"
+                  aria-label="Retornos"
                   className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
                 >
                   <Clock className="w-5 h-5" />
-                  <span className="font-medium">Retornos</span>
+                  <span className="hidden font-medium xl:inline">Retornos</span>
                 </Link>
               )}
 
               <Link
                 to="/agendamentos"
+                title="Agendamentos"
+                aria-label="Agendamentos"
                 className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
               >
                 <Calendar className="w-5 h-5" />
-                <span className="font-medium">Agendamentos</span>
+                <span className="hidden font-medium xl:inline">Agendamentos</span>
               </Link>
 
               <Link
                 to="/portfolio"
+                title="Procedimentos"
+                aria-label="Procedimentos"
                 className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
               >
                 <ClipboardList className="w-5 h-5" />
-                <span className="font-medium">Procedimentos</span>
+                <span className="hidden font-medium xl:inline">Procedimentos</span>
               </Link>
 
               <Link
                 to="/sobre-nos"
+                title="Sobre Nós"
+                aria-label="Sobre Nós"
                 className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
               >
                 <Info className="w-5 h-5" />
-                <span className="font-medium">Sobre Nós</span>
+                <span className="hidden font-medium xl:inline">Sobre Nós</span>
               </Link>
             </div>
 
