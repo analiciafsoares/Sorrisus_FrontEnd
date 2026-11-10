@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar.jsx";
 import { listarPacientes } from "../../services/pacienteService.js";
 import { listarDentistas } from "../../services/dentistaService.js";
-import { listarConsultasPorDentista, listarConsultasParaRecepcao } from "../../services/consultaService.js";
+import { listarConsultasPorDentista } from "../../services/consultaService.js";
 import { Users, Calendar, UserCog, TrendingUp, Clock } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 
@@ -76,10 +76,7 @@ const Dashboard = () => {
         return;
       }
       try {
-        // A recepção não tem consultas próprias: conta as consultas de toda a clínica.
-        const res = role.includes("RECEPCIONISTA")
-          ? await listarConsultasParaRecepcao()
-          : await listarConsultasPorDentista(userId);
+        const res = await listarConsultasPorDentista(userId);
         if (!mounted) return;
         const count = getCountFromResponse(res);
         setConsultasCount(count);
