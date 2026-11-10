@@ -7,6 +7,7 @@ import { listarDentistas } from "../../services/dentistaService.js";
 import { listarConsultasPorDentista, listarConsultasParaRecepcao } from "../../services/consultaService.js";
 import { Users, Calendar, UserCog, TrendingUp, Clock } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { getUserId } from "../../services/authService.js";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -26,18 +27,8 @@ const Dashboard = () => {
   const getCurrentUserId = () => {
     if (user?.id) return user.id;
     if (user?.userId) return user.userId;
-    const fromStorage = localStorage.getItem("userId") || localStorage.getItem("id");
+    const fromStorage = getUserId();
     if (fromStorage) return Number(fromStorage);
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.id) return parsed.id;
-        if (parsed?.userId) return parsed.userId;
-      }
-    } catch (e) {
-      // ignore
-    }
     return null;
   };
 
@@ -76,7 +67,6 @@ const Dashboard = () => {
         return;
       }
       try {
-        // A recepção não tem consultas próprias: conta as consultas de toda a clínica.
         const res = role.includes("RECEPCIONISTA")
           ? await listarConsultasParaRecepcao()
           : await listarConsultasPorDentista(userId);

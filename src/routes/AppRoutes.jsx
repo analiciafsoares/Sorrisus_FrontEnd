@@ -29,6 +29,8 @@ const ROLES_GESTAO_SERVICOS = [
   "RECEPCIONISTA",
 ];
 
+const ROLES_GESTAO_AGENDAMENTOS = ROLES_GESTAO_SERVICOS;
+
 export default function AppRoutes() {
   return (
     <AuthProvider>
@@ -123,7 +125,7 @@ export default function AppRoutes() {
           <Route
             path="/agendamentos/novo"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={ROLES_GESTAO_AGENDAMENTOS}>
                 <NovoAgendamento />
               </PrivateRoute>
             }
@@ -131,7 +133,7 @@ export default function AppRoutes() {
           <Route
             path="/agendamentos/editar/:id"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={ROLES_GESTAO_AGENDAMENTOS}>
                 <EditarAgendamento />
               </PrivateRoute>
             }

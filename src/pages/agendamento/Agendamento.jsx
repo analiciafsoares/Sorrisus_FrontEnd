@@ -8,6 +8,7 @@ import {
 } from "../../services/agendamentoService";
 import { buscarPacientePorId } from "../../services/pacienteService";
 import { listarDentistas } from "../../services/dentistaService";
+import { getRole, getUserId } from "../../services/authService";
 import Navbar from "../../components/Navbar";
 import ConfirmModal from "../../components/ConfirmModal";
 import Toast from "../../components/Toast";
@@ -39,7 +40,7 @@ const Agendamento = () => {
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState({ type: null, message: null });
   const navigate = useNavigate();
-  const role = localStorage.getItem("role") || "";
+  const role = getRole() || "";
   const isDentista = role.includes("DENTISTA");
   const isRecepcionista = role.includes("RECEPCIONISTA");
   const podeGerenciar = isDentista || isRecepcionista;
@@ -47,7 +48,7 @@ const Agendamento = () => {
   const [dentistaSelecionado, setDentistaSelecionado] = useState("");
 
   const carregarAgendamentos = useCallback(async () => {
-    const userId = localStorage.getItem("userId");
+    const userId = getUserId();
     if (!userId) {
       setToast({ type: "error", message: "Usuário não identificado. Faça login novamente." });
       navigate("/login");

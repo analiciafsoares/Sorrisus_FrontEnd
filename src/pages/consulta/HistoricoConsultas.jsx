@@ -14,6 +14,7 @@ import ConfirmModal from "../../components/ConfirmModal";
 import Toast from "../../components/Toast";
 import { formatarData } from "../../utils/formatters";
 import { ArrowLeft, ClipboardList, History, UserX, XCircle } from "lucide-react";
+import { getToken, getUserId } from "../../services/authService";
 
 const ACOES = {
   naoCompareceu: {
@@ -48,7 +49,7 @@ const HistoricoConsultas = () => {
   const carregarConsultas = useCallback(async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = getToken();
       if (!token) {
         setLoading(false);
         return;
@@ -62,7 +63,7 @@ const HistoricoConsultas = () => {
       role = String(role || "").toUpperCase();
       setUserRole(role);
 
-      const userId = decoded.userId || decoded.id || decoded.sub || Number(localStorage.getItem("userId")) || null;
+      const userId = decoded.userId || decoded.id || decoded.sub || Number(getUserId()) || null;
       if (!userId) {
         setConsultas([]);
         setLoading(false);
@@ -71,10 +72,10 @@ const HistoricoConsultas = () => {
 
       let data = [];
       if (role.includes("PACIENTE")) {
-        const res = await listarConsultasPorPaciente(localStorage.getItem("userId"));
+        const res = await listarConsultasPorPaciente(getUserId());
         data = Array.isArray(res.data) ? res.data : (res.data?.content || res.data?.data || []);
       } else if (role.includes("DENTISTA")) {
-        const res = await listarConsultasPorDentista(localStorage.getItem("userId"));
+        const res = await listarConsultasPorDentista(getUserId());
         data = Array.isArray(res.data) ? res.data : (res.data?.content || res.data?.data || []);
       } else if (role.includes("RECEPCIONISTA")) {
         const res = await listarConsultasParaRecepcao();
