@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeft, Loader2, Pencil, Save, UserCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, KeyRound, Loader2, Pencil, Save, UserCircle } from "lucide-react";
 import Navbar from "../../components/Navbar";
-import { getUserId, getRole } from "../../services/authService";
+import { getUserId, getRole, alterarSenha } from "../../services/authService";
 import {
   buscarPacientePorId,
   atualizarPaciente,
@@ -99,6 +99,90 @@ function Rotulo({ label, children }) {
       <span className="text-sm font-medium text-gray-700">{label}</span>
       {children}
     </label>
+  );
+}
+
+const SENHA_VAZIA = { senhaAtual: "", novaSenha: "", confirmacao: "" };
+
+function AlterarSenha() {
+  const [form, setForm] = useState(SENHA_VAZIA);
+  const [salvando, setSalvando] = useState(false);
+  const [mensagem, setMensagem] = useState({ type: null, text: "" });
+
+  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (form.novaSenha.length < 6) {
+      setMensagem({ type: "error", text: "A nova senha deve ter pelo menos 6 caracteres." });
+      return;
+    }
+    if (form.novaSenha !== form.confirmacao) {
+      setMensagem({ type: "error", text: "A confirmação não confere com a nova senha." });
+      return;
+    }
+    setSalvando(true);
+    try {
+      await alterarSenha(form.senhaAtual, form.novaSenha);
+      setForm(SENHA_VAZIA);
+      setMensagem({ type: "success", text: "Senha alterada com sucesso!" });
+    } catch (error) {
+      setMensagem({
+        type: "error",
+        text: error.response?.data?.message || "Não foi possível alterar a senha. Tente novamente.",
+      });
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <section className="mt-6 bg-white rounded-lg shadow border border-gray-200 p-6">
+      <div className="flex items-center gap-3 mb-1">
+        <KeyRound className="w-5 h-5 text-blue-600" />
+        <h2 className="text-lg font-semibold text-gray-800">Alterar senha</h2>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">
+        Se a sua conta foi criada pela clínica, troque a senha inicial no primeiro acesso.
+      </p>
+
+      {mensagem.text && (
+        <div
+          role="status"
+          className={`mb-4 px-4 py-2 rounded ${
+            mensagem.type === "error"
+              ? "bg-red-50 border border-red-200 text-red-700"
+              : "bg-green-50 border border-green-200 text-green-800"
+          }`}
+        >
+          {mensagem.text}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Rotulo label="Senha atual">
+            <input type="password" name="senhaAtual" value={form.senhaAtual} onChange={handleChange} autoComplete="current-password" className={inputClass} required />
+          </Rotulo>
+          <Rotulo label="Nova senha">
+            <input type="password" name="novaSenha" value={form.novaSenha} onChange={handleChange} autoComplete="new-password" minLength={6} className={inputClass} required />
+          </Rotulo>
+          <Rotulo label="Confirmar nova senha">
+            <input type="password" name="confirmacao" value={form.confirmacao} onChange={handleChange} autoComplete="new-password" minLength={6} className={inputClass} required />
+          </Rotulo>
+        </div>
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={salvando}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <KeyRound size={18} />
+            {salvando ? "Salvando..." : "Alterar senha"}
+          </button>
+        </div>
+      </form>
+    </section>
   );
 }
 
@@ -375,6 +459,8 @@ const GerenciarPerfil = () => {
         )}
 
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">{renderConteudo()}</div>
+
+        {!loading && data && <AlterarSenha />}
       </main>
     </div>
   );

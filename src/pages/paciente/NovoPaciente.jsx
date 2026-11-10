@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Toast from "../../components/Toast";
 import { cadastrarPaciente } from "../../services/pacienteService";
-import { ArrowLeft, Save, User } from "lucide-react";
+import { ArrowLeft, Info, Save, User } from "lucide-react";
 
 export default function NovoPaciente() {
   const navigate = useNavigate();
@@ -112,6 +112,14 @@ export default function NovoPaciente() {
                 {toast.message}
               </div>
             )}
+
+            <div className="flex items-start gap-2 rounded border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                A senha inicial do paciente será o <strong>CPF (somente números)</strong>. Informe o paciente e
+                oriente-o a trocá-la no perfil no primeiro acesso.
+              </p>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">

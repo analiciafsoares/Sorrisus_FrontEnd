@@ -11,6 +11,10 @@ export const login = async (email, password) => {
   return response.data;
 };
 
+export const alterarSenha = (senhaAtual, novaSenha) => {
+  return api.put("/usuarios/me/senha", { senhaAtual, novaSenha });
+};
+
 export const logout = () => {
   CHAVES_SESSAO.forEach((chave) => storage.removeItem(chave));
 };

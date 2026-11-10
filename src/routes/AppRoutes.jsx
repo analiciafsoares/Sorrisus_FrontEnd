@@ -5,7 +5,6 @@ import Login from "../pages/auth/Login.jsx";
 import ListarPaciente from "../pages/paciente/ListarPaciente.jsx";
 import EditarPaciente from "../pages/paciente/EditarPaciente.jsx";
 import Agendamento from "../pages/agendamento/Agendamento.jsx";
-import CadastrarPaciente from "../pages/paciente/CadastrarPaciente.jsx";
 import GerenciarPerfil from "../pages/perfil/GerenciarPerfil.jsx";
 import Dashboard from "../pages/dashboard/DashboardDentista.jsx";
 import AnamneseOdontograma from "../pages/dentista/AnamneseOdontograma.jsx";
@@ -38,7 +37,6 @@ export default function AppRoutes() {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/login" element={<Login />} />
-          <Route path="/pacientes/cadastrar" element={<CadastrarPaciente />} />
 
           {/* Rotas Privadas */}
           <Route
@@ -76,7 +74,7 @@ export default function AppRoutes() {
           <Route
             path="/pacientes/cadastrar/interno"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={ROLES_GESTAO_AGENDAMENTOS}>
                 <NovoPaciente />
               </PrivateRoute>
             }

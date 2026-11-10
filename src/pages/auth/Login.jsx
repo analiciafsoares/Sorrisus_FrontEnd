@@ -73,7 +73,7 @@ const Login = () => {
 
     try {
       const response = await login(formData.email, formData.password);
-      
+
       setAuthData(response);
       setUser({
         email: response.email,
@@ -93,7 +93,7 @@ const Login = () => {
     } catch (err) {
       console.error("Erro ao fazer login:", err);
       setError(
-        err.response?.data?.message || 
+        err.response?.data?.message ||
         "Erro ao fazer login. Verifique suas credenciais e tente novamente."
       );
     } finally {
@@ -120,7 +120,7 @@ const Login = () => {
           {/* Form */}
           <div className="p-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6">Bem-vindo de volta</h2>
-            
+
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -135,9 +135,8 @@ const Login = () => {
                   E-mail
                 </label>
                 <div className="relative">
-                  <Mail className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
-                    fieldErrors.email && touched.email ? 'text-red-500' : 'text-gray-400'
-                  }`} />
+                  <Mail className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${fieldErrors.email && touched.email ? 'text-red-500' : 'text-gray-400'
+                    }`} />
                   <input
                     id="email"
                     name="email"
@@ -146,11 +145,10 @@ const Login = () => {
                     value={formData.email}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg transition-all outline-none ${
-                      fieldErrors.email && touched.email
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg transition-all outline-none ${fieldErrors.email && touched.email
                         ? 'border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50'
                         : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                    }`}
+                      }`}
                     placeholder="seu@email.com"
                     disabled={loading}
                   />
@@ -171,9 +169,8 @@ const Login = () => {
                   Senha
                 </label>
                 <div className="relative">
-                  <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${
-                    fieldErrors.password && touched.password ? 'text-red-500' : 'text-gray-400'
-                  }`} />
+                  <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 transition-colors ${fieldErrors.password && touched.password ? 'text-red-500' : 'text-gray-400'
+                    }`} />
                   <input
                     id="password"
                     name="password"
@@ -182,11 +179,10 @@ const Login = () => {
                     value={formData.password}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    className={`w-full pl-10 pr-12 py-3 border rounded-lg transition-all outline-none ${
-                      fieldErrors.password && touched.password
+                    className={`w-full pl-10 pr-12 py-3 border rounded-lg transition-all outline-none ${fieldErrors.password && touched.password
                         ? 'border-red-500 focus:ring-2 focus:ring-red-500 bg-red-50'
                         : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                    }`}
+                      }`}
                     placeholder="••••••••"
                     disabled={loading}
                   />
@@ -244,16 +240,11 @@ const Login = () => {
               </button>
             </div>
 
-            {/* Cadastro */}
-            <div className="mt-6 text-center text-sm text-gray-600">
-              Não tem uma conta?{" "}
-              <Link
-                to="/pacientes/cadastrar"
-                className="text-blue-600 hover:text-blue-700 font-semibold"
-              >
-                Cadastre-se
-              </Link>
-            </div>
+            <p className="mt-6 text-center text-sm text-gray-600">
+              Ainda não tem acesso? Procure a recepção da clínica para fazer seu cadastro.
+              <br />
+              No primeiro acesso, troque a senha inicial no seu perfil.
+            </p>
           </div>
         </div>
 
