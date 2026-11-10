@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   listarAgendamentosPorDentista,
@@ -7,6 +7,7 @@ import {
   listarAgendamentosPorPaciente
 } from "../../services/agendamentoService";
 import { buscarPacientePorId } from "../../services/pacienteService";
+import { listarDentistas } from "../../services/dentistaService";
 import Navbar from "../../components/Navbar";
 import ConfirmModal from "../../components/ConfirmModal";
 import Toast from "../../components/Toast";
@@ -39,24 +40,30 @@ const Agendamento = () => {
   const [toast, setToast] = useState({ type: null, message: null });
   const navigate = useNavigate();
   const role = localStorage.getItem("role") || "";
-  const podeGerenciar = role.includes("DENTISTA") || role.includes("RECEPCIONISTA");
+  const isDentista = role.includes("DENTISTA");
+  const isRecepcionista = role.includes("RECEPCIONISTA");
+  const podeGerenciar = isDentista || isRecepcionista;
+  const [dentistas, setDentistas] = useState([]);
+  const [dentistaSelecionado, setDentistaSelecionado] = useState("");
 
-  const carregarAgendamentos = async () => {
+  const carregarAgendamentos = useCallback(async () => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      setToast({ type: "error", message: "Usuário não identificado. Faça login novamente." });
+      navigate("/login");
+      return;
+    }
+    if (isRecepcionista && !dentistaSelecionado) return;
+
     setLoading(true);
     try {
-      const userId = localStorage.getItem("userId");
-      const userRole = localStorage.getItem("role");
-      if (!userId) {
-        setToast({ type: "error", message: "Usuário não identificado. Faça login novamente." });
-        navigate("/login");
-        return;
-      }
-
       let resp;
-      if (!userRole || !userRole.includes("DENTISTA")) {
-        resp = await listarAgendamentosPorPaciente(userId);
-      } else {
+      if (isRecepcionista) {
+        resp = await listarAgendamentosPorDentista(dentistaSelecionado);
+      } else if (isDentista) {
         resp = await listarAgendamentosPorDentista(userId);
+      } else {
+        resp = await listarAgendamentosPorPaciente(userId);
       }
 
       const ags = Array.isArray(resp.data) ? resp.data : [];
@@ -99,11 +106,30 @@ const Agendamento = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isDentista, isRecepcionista, dentistaSelecionado, navigate]);
+
+  useEffect(() => {
+    if (!isRecepcionista) return;
+    listarDentistas()
+      .then((resp) => {
+        const lista = Array.isArray(resp.data) ? resp.data : [];
+        setDentistas(lista);
+        if (lista.length > 0) {
+          setDentistaSelecionado(String(lista[0].id));
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao listar dentistas:", err);
+        setToast({ type: "error", message: "Erro ao carregar a lista de dentistas." });
+        setLoading(false);
+      });
+  }, [isRecepcionista]);
 
   useEffect(() => {
     carregarAgendamentos();
-  }, []);
+  }, [carregarAgendamentos]);
 
   const openCancelModal = (id) => {
     setSelectedId(id);
@@ -169,8 +195,12 @@ const Agendamento = () => {
               <Calendar className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-800">Meus Agendamentos</h1>
-              <p className="text-sm text-gray-500">Gerencie sua agenda de consultas</p>
+              <h1 className="text-2xl font-semibold text-gray-800">
+                {isRecepcionista ? "Agenda da Clínica" : "Meus Agendamentos"}
+              </h1>
+              <p className="text-sm text-gray-500">
+                {isRecepcionista ? "Selecione o dentista para ver e gerenciar a agenda" : "Gerencie sua agenda de consultas"}
+              </p>
             </div>
           </div>
 
@@ -193,6 +223,28 @@ const Agendamento = () => {
             )}
           </div>
         </div>
+
+        {isRecepcionista && (
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <label htmlFor="filtro-dentista" className="text-sm font-medium text-gray-700">
+              Dentista
+            </label>
+            <select
+              id="filtro-dentista"
+              value={dentistaSelecionado}
+              onChange={(e) => setDentistaSelecionado(e.target.value)}
+              disabled={dentistas.length === 0}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:w-72"
+            >
+              {dentistas.length === 0 && <option value="">Nenhum dentista cadastrado</option>}
+              {dentistas.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.nome || d.email}{d.especialidade ? ` - ${d.especialidade}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200">
