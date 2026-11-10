@@ -1,19 +1,39 @@
 import { useAuth } from "../context/AuthContext.jsx"; import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { LogOut, User, Home, Users, Calendar, Power, ClipboardList, Info, Clock } from "lucide-react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { LogOut, User, Home, Users, Calendar, Power, ClipboardList, Info, Clock, Menu, X } from "lucide-react";
 import { useState } from "react";
+
+const ROLE_LABELS = {
+  ROLE_DENTISTA: "Dentista",
+  ROLE_RECEPCIONISTA: "Recepcionista",
+  ROLE_PACIENTE: "Paciente",
+};
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [menuAberto, setMenuAberto] = useState(false);
+
+  const role = String(user?.role || "").toUpperCase();
+  const isPaciente = role === "ROLE_PACIENTE" || role === "PACIENTE";
+  const podeVisualizarRetornos = ["ROLE_DENTISTA", "DENTISTA", "ROLE_RECEPCIONISTA", "RECEPCIONISTA"].includes(role);
+  const roleLabel = ROLE_LABELS[role] || ROLE_LABELS[`ROLE_${role}`] || role.replace("ROLE_", "");
 
   const dashboardPath = useMemo(() => {
-    if (!user || !user.role) return "/login";
-    const role = String(user.role).toUpperCase();
+    if (!role) return "/login";
     if (role.includes("PACIENTE")) return "/dashboard-paciente";
     return "/dashboard-dentista";
-  }, [user]);
+  }, [role]);
+
+  const itensMenu = [
+    { to: dashboardPath, label: "Dashboard", Icone: Home },
+    { to: "/pacientes", label: "Pacientes", Icone: Users, visivel: !isPaciente },
+    { to: "/retornos-pendentes", label: "Retornos", Icone: Clock, visivel: podeVisualizarRetornos },
+    { to: "/agendamentos", label: "Agendamentos", Icone: Calendar },
+    { to: "/portfolio", label: "Procedimentos", Icone: ClipboardList },
+    { to: "/sobre-nos", label: "Sobre Nós", Icone: Info },
+  ].filter((item) => item.visivel !== false);
 
   const handleLogout = () => {
     logout();
@@ -21,6 +41,7 @@ const Navbar = () => {
   };
 
   const confirmLogout = () => {
+    setMenuAberto(false);
     setShowLogoutModal(true);
   };
 
@@ -28,143 +49,109 @@ const Navbar = () => {
     setShowLogoutModal(false);
   };
 
-  const isPaciente = () => {
-    if (!user || !user.role) return false;
-    const role = String(user.role).toUpperCase();
-    return role === "ROLE_PACIENTE" || role === "PACIENTE";
+  const irParaPerfil = () => {
+    if (!user?.role) return;
+    setMenuAberto(false);
+    navigate("/perfil");
   };
 
-  const podeVisualizarRetornos = () => {
-    if (!user || !user.role) return false;
-    const role = String(user.role).toUpperCase();
-    return ["ROLE_DENTISTA", "DENTISTA", "ROLE_RECEPCIONISTA", "RECEPCIONISTA"].includes(role);
-  };
+  const classeItemDesktop = ({ isActive }) =>
+    `flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium transition-colors xl:gap-2 xl:px-3 xl:text-[15px] ${
+      isActive ? "bg-white/15 text-white" : "text-blue-50 hover:bg-white/10 hover:text-white"
+    }`;
+
+  const classeItemMobile = ({ isActive }) =>
+    `flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors ${
+      isActive ? "bg-white/15 text-white" : "text-blue-50 hover:bg-white/10 hover:text-white"
+    }`;
 
   return (
     <>
-      <nav className="bg-blue-600 shadow-sm border-b border-blue-700">
-        <div className="w-full px-2 xl:px-5 2xl:px-8">
-          <div className="flex h-16 flex-nowrap items-center">
+      <nav className="relative bg-blue-600 shadow-sm border-b border-blue-700">
+        <div className="w-full px-3 sm:px-4 xl:px-6">
+          <div className="flex h-16 flex-nowrap items-center justify-between gap-3">
             {/* Logo */}
-            <Link
-              to={dashboardPath}
-              className="mr-3 flex shrink-0 items-center gap-3 xl:mr-6 2xl:mr-8"
-            >
-              <img src="/sorrisus.png" alt="Sorrisus" className="w-10 h-10 rounded-lg object-contain" />
-              <span className="text-xl font-bold text-white">Sorrisus</span>
+            <Link to={dashboardPath} className="flex shrink-0 items-center gap-2.5">
+              <img
+                src="/sorrisus-icone.png"
+                alt=""
+                className="h-10 w-10 rounded-xl object-cover shadow-sm ring-2 ring-white/70"
+              />
+              <span className="text-xl font-bold tracking-tight text-white">Sorrisus</span>
             </Link>
 
-            {/* Menu */}
-            <div className="flex min-w-0 flex-1 flex-nowrap items-center justify-center gap-4 xl:gap-5 2xl:gap-7">
-              <Link
-                to={dashboardPath}
-                title="Dashboard"
-                aria-label="Dashboard"
-                className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
-              >
-                <Home className="w-5 h-5" />
-                <span className="hidden font-medium xl:inline">Dashboard</span>
-              </Link>
-
-              {!isPaciente() && (
-                <Link
-                  to="/pacientes"
-                  title="Pacientes"
-                  aria-label="Pacientes"
-                  className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
-                >
-                  <Users className="w-5 h-5" />
-                  <span className="hidden font-medium xl:inline">Pacientes</span>
-                </Link>
-              )}
-
-              {podeVisualizarRetornos() && (
-                <Link
-                  to="/retornos-pendentes"
-                  title="Retornos"
-                  aria-label="Retornos"
-                  className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
-                >
-                  <Clock className="w-5 h-5" />
-                  <span className="hidden font-medium xl:inline">Retornos</span>
-                </Link>
-              )}
-
-              <Link
-                to="/agendamentos"
-                title="Agendamentos"
-                aria-label="Agendamentos"
-                className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
-              >
-                <Calendar className="w-5 h-5" />
-                <span className="hidden font-medium xl:inline">Agendamentos</span>
-              </Link>
-
-              <Link
-                to="/portfolio"
-                title="Procedimentos"
-                aria-label="Procedimentos"
-                className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
-              >
-                <ClipboardList className="w-5 h-5" />
-                <span className="hidden font-medium xl:inline">Procedimentos</span>
-              </Link>
-
-              <Link
-                to="/sobre-nos"
-                title="Sobre Nós"
-                aria-label="Sobre Nós"
-                className="flex shrink-0 items-center gap-1 whitespace-nowrap text-white hover:text-blue-200 transition-colors xl:gap-1.5 2xl:gap-2"
-              >
-                <Info className="w-5 h-5" />
-                <span className="hidden font-medium xl:inline">Sobre Nós</span>
-              </Link>
+            {/* Menu (telas largas) */}
+            <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex xl:gap-2">
+              {itensMenu.map((item) => (
+                <NavLink key={item.to} to={item.to} className={classeItemDesktop}>
+                  <item.Icone className="h-4 w-4 xl:h-5 xl:w-5" />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
             </div>
 
             {/* User Info e Logout */}
-            <div className="ml-3 flex shrink-0 items-center gap-2 xl:ml-4 2xl:gap-4">
-              <div
-                role="button"
-                tabIndex={0}
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
                 title="Ver perfil"
-                onClick={() => {
-                  if (!user?.role) return;
-                  navigate("/perfil");
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
-                    e.preventDefault();
-                    if (!user?.role) return;
-                    navigate("/perfil");
-                  }
-                }}
-                className="flex shrink-0 items-center gap-2 rounded-lg bg-white/90 px-2 py-2 cursor-pointer 2xl:px-3"
+                onClick={irParaPerfil}
+                className="flex items-center gap-2 rounded-full bg-white py-1 pl-1 pr-1 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white xl:pr-4"
               >
-                <User className="w-5 h-5 text-gray-700" />
-                <div className="hidden max-w-32 flex-col items-start xl:flex 2xl:max-w-40">
-                  <span className="max-w-32 truncate text-sm font-medium text-gray-700 2xl:max-w-40">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+                  <User className="h-5 w-5" />
+                </span>
+                <span className="hidden max-w-36 flex-col items-start leading-tight xl:flex">
+                  <span className="max-w-36 truncate text-sm font-semibold text-gray-800">
                     {user?.email || "Usuário"}
                   </span>
-                  {user?.role && (
-                    <span className="text-xs text-gray-500">
-                      {String(user.role).replace('ROLE_', '')}
-                    </span>
-                  )}
-                </div>
-              </div>
+                  {roleLabel && <span className="text-xs text-gray-500">{roleLabel}</span>}
+                </span>
+              </button>
 
               <button
+                type="button"
                 onClick={confirmLogout}
                 title="Sair"
                 aria-label="Sair do sistema"
-                className="group flex shrink-0 items-center justify-center gap-2 rounded-lg p-2 text-red-600 transition-all hover:bg-red-50 hover:shadow-md 2xl:px-3"
+                className="flex h-10 items-center justify-center gap-2 rounded-lg px-2.5 text-white transition-colors hover:bg-red-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
-                <Power className="w-5 h-5 group-hover:animate-pulse" />
-                <span className="hidden font-medium 2xl:inline">Sair</span>
+                <Power className="h-5 w-5" />
+                <span className="hidden text-sm font-medium 2xl:inline">Sair</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMenuAberto((aberto) => !aberto)}
+                aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
+                aria-expanded={menuAberto}
+                aria-controls="menu-mobile"
+                className="flex h-10 w-10 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white lg:hidden"
+              >
+                {menuAberto ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
             </div>
           </div>
         </div>
+
+        {/* Menu (telas estreitas) */}
+        {menuAberto && (
+          <div id="menu-mobile" className="border-t border-blue-500 bg-blue-600 px-3 pb-3 pt-2 shadow-lg lg:hidden">
+            {roleLabel && (
+              <p className="px-3 pb-2 text-xs text-blue-100">
+                {user?.email} · {roleLabel}
+              </p>
+            )}
+            <div className="flex flex-col gap-1">
+              {itensMenu.map((item) => (
+                <NavLink key={item.to} to={item.to} className={classeItemMobile} onClick={() => setMenuAberto(false)}>
+                  <item.Icone className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Modal de Confirmação de Logout */}
