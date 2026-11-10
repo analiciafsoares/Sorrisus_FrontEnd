@@ -18,6 +18,8 @@ As restrições também são aplicadas pela API, que responde **403** quando o p
 
 **O paciente não se autocadastra.** Não há cadastro público: a conta do paciente é criada pela equipe da clínica (dentista ou recepcionista) na tela de Pacientes, e a tela de login orienta o paciente a procurar a recepção.
 
+**Primeiro acesso do paciente:** a equipe não define senha. A senha inicial é o **CPF do paciente (somente números)**, e o formulário de cadastro lembra a equipe de informar isso ao paciente. No primeiro acesso, o paciente troca a senha em **Gerenciar Perfil → Alterar senha**. Quem não quiser usar o sistema não precisa fazer nada e continua sendo atendido normalmente.
+
 ## Funcionalidades implementadas
 - **Login com token JWT.** A sessão fica no `sessionStorage`: sobrevive a recarregar a página, mas termina ao fechar a aba ou o navegador, exigindo novo login. Token expirado ou resposta **401** da API levam de volta à tela de login.
 - **Dashboards** por perfil: equipe da clínica (pacientes, consultas e dentistas) e paciente.
@@ -29,7 +31,7 @@ As restrições também são aplicadas pela API, que responde **403** quando o p
 - **Serviços:** cadastro, edição e desativação (dentista e recepcionista).
 - **Procedimentos:** catálogo dos serviços ativos, com busca.
 - **Sobre Nós:** apresentação da clínica e do corpo clínico.
-- **Perfil unificado** (`/perfil`): visualiza e edita os dados do usuário conforme o perfil.
+- **Perfil unificado** (`/perfil`): visualiza e edita os dados do usuário conforme o perfil e permite **alterar a senha** (senha atual + nova senha com confirmação).
 - **Navbar responsiva:** menu completo em telas a partir de 1024 px e menu recolhível em telas menores; página atual destacada.
 
 ## Estrutura de páginas

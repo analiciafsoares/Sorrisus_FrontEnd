@@ -242,6 +242,8 @@ const Login = () => {
 
             <p className="mt-6 text-center text-sm text-gray-600">
               Ainda não tem acesso? Procure a recepção da clínica para fazer seu cadastro.
+              <br />
+              No primeiro acesso, troque a senha inicial no seu perfil.
             </p>
           </div>
         </div>
