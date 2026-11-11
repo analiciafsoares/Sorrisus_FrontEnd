@@ -11,6 +11,12 @@ import { salvarProntuario, buscarProntuarioPorConsulta } from '../../services/pr
 import { buscarPacientePorId } from '../../services/pacienteService';
 import { buscarAnamnesePorPaciente } from '../../services/anamneseService';
 import { carregarFichaClinica } from './fichaClinicaLoader';
+import {
+    criarPayloadFichaClinica,
+    criarSnapshotFichaClinica,
+    podeFinalizarFichaClinica,
+    possuiAlteracoesNaoSalvas,
+} from './fichaClinicaState';
 
 // --- HELPER COMPONENTS ---
 
@@ -193,8 +199,10 @@ const FichaClinica = () => {
     const [dataHoraConsulta, setDataHoraConsulta] = useState(null);
     const [confirmarFinalizacao, setConfirmarFinalizacao] = useState(false);
     const [finalizando, setFinalizando] = useState(false);
+    const [salvando, setSalvando] = useState(false);
     const [carregando, setCarregando] = useState(true);
     const [erroCarregamento, setErroCarregamento] = useState(false);
+    const [ultimoSnapshotSalvo, setUltimoSnapshotSalvo] = useState(null);
 
     const [fichaClinica, setFichaClinica] = useState({
         pacienteId: "",
@@ -220,6 +228,15 @@ const FichaClinica = () => {
 
     const [odontogramState, setOdontogramState] = useState(initialOdontogramState);
 
+    const hasUnsavedChanges = useMemo(
+        () => possuiAlteracoesNaoSalvas(
+            fichaClinica,
+            odontogramState,
+            ultimoSnapshotSalvo
+        ),
+        [fichaClinica, odontogramState, ultimoSnapshotSalvo]
+    );
+
     useEffect(() => {
         if (!consultaId) {
             setCarregando(false);
@@ -239,6 +256,7 @@ const FichaClinica = () => {
             setStatusConsulta(null);
             setDataHoraConsulta(null);
             setOdontogramState(initialOdontogramState);
+            setUltimoSnapshotSalvo(null);
 
             try {
                 const dados = await carregarFichaClinica({
@@ -256,7 +274,7 @@ const FichaClinica = () => {
 
                 setStatusConsulta(dados.consulta.status);
                 setDataHoraConsulta(dados.consulta.dataHora);
-                setFichaClinica({
+                const fichaCarregada = {
                     pacienteId: dados.consulta.pacienteId,
                     pacienteNome: dados.paciente?.nome ?? "Paciente não identificado",
                     indicador: "",
@@ -290,18 +308,26 @@ const FichaClinica = () => {
                     },
                     observacoes: dadosProntuario?.observacoes ?? "",
                     planoTratamento: dadosProntuario?.planoTratamento ?? "",
-                });
+                };
+
+                let odontogramaCarregado = { ...initialOdontogramState };
 
                 if (dadosProntuario?.odontogramaJson) {
                     try {
-                        setOdontogramState({
+                        odontogramaCarregado = {
                             ...initialOdontogramState,
                             ...JSON.parse(dadosProntuario.odontogramaJson),
-                        });
+                        };
                     } catch (error) {
                         console.error("Erro ao ler JSON do odontograma", error);
                     }
                 }
+
+                setFichaClinica(fichaCarregada);
+                setOdontogramState(odontogramaCarregado);
+                setUltimoSnapshotSalvo(
+                    criarSnapshotFichaClinica(fichaCarregada, odontogramaCarregado)
+                );
             } catch (error) {
                 if (!ativo) return;
 
@@ -372,59 +398,74 @@ const FichaClinica = () => {
             return;
         }
 
-        try {
-            const payload = {
-                alergiaResposta: fichaClinica.alergia.resposta,
-                alergiaNotas: fichaClinica.alergia.notas,
-                antibioticoResposta: fichaClinica.antibiotico.resposta,
-                antibioticoNotas: fichaClinica.antibiotico.notas,
-                anestesicoResposta: fichaClinica.anestesico.resposta,
-                anestesicoNotas: fichaClinica.anestesico.notas,
-                sensibilidadeResposta: fichaClinica.sensibilidade.resposta,
-                sensibilidadeNotas: fichaClinica.sensibilidade.notas,
-                pressaoResposta: fichaClinica.pressao.resposta,
-                pressaoNotas: fichaClinica.pressao.notas,
-                medicamentoResposta: fichaClinica.medicamento.resposta,
-                medicamentoNotas: fichaClinica.medicamento.notas,
-                problemaSaudeResposta: fichaClinica.problemaSaude.resposta,
-                problemaSaudeNotas: fichaClinica.problemaSaude.notas,
-                observacoes: fichaClinica.observacoes,
-                planoTratamento: fichaClinica.planoTratamento,
-                odontogramaJson: JSON.stringify(odontogramState),
-            };
+        if (salvando || finalizando) return;
 
+        const payload = criarPayloadFichaClinica(fichaClinica, odontogramState);
+        const snapshotEnviado = JSON.stringify(payload);
+
+        setSalvando(true);
+        try {
             await salvarProntuario(payload, consultaId);
 
+            setUltimoSnapshotSalvo(snapshotEnviado);
             setMensagem("Ficha clínica salva com sucesso!");
             setTipoMensagem("success");
-            
-            // 1. SOBE O SCROLL PARA VER A MENSAGEM
             window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            // 2. AGUARDA 10 SEGUNDOS E REDIRECIONA
-            setTimeout(() => {
-                navigate('/historico-consultas');
-            }, 10000);
-
         } catch (error) {
             console.error(error);
             setMensagem("Erro ao salvar a ficha clínica. Tente novamente.");
             setTipoMensagem("danger");
-            
-            // 1. SOBE O SCROLL PARA VER O ERRO
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            // 2. AGUARDA 10 SEGUNDOS E LIMPA A MENSAGEM
             setTimeout(() => {
                 setMensagem("");
                 setTipoMensagem("");
             }, 10000);
+        } finally {
+            setSalvando(false);
         }
     };
 
     const horarioChegou = dataHoraConsulta && new Date(dataHoraConsulta) <= new Date();
 
+    const exibirAvisoAlteracoesNaoSalvas = () => {
+        setMensagem("Existem alterações não salvas na ficha clínica. Salve a ficha antes de finalizar o atendimento.");
+        setTipoMensagem("danger");
+        setConfirmarFinalizacao(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const solicitarFinalizacao = () => {
+        if (hasUnsavedChanges) {
+            exibirAvisoAlteracoesNaoSalvas();
+            return;
+        }
+
+        if (!podeFinalizarFichaClinica({
+            hasUnsavedChanges,
+            carregando,
+            erroCarregamento,
+            salvando,
+            finalizando,
+        })) return;
+
+        setConfirmarFinalizacao(true);
+    };
+
     const handleFinalizar = async () => {
+        if (hasUnsavedChanges) {
+            exibirAvisoAlteracoesNaoSalvas();
+            return;
+        }
+
+        if (salvando || finalizando) {
+            setMensagem("Aguarde a conclusão da operação atual antes de finalizar o atendimento.");
+            setTipoMensagem("danger");
+            setConfirmarFinalizacao(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         if (carregando || erroCarregamento) {
             setMensagem("O atendimento não pode ser finalizado porque os dados clínicos não foram carregados corretamente.");
             setTipoMensagem("danger");
@@ -635,10 +676,14 @@ const FichaClinica = () => {
                     <div className="pt-4 space-y-3">
                         <button
                             type="submit"
-                            disabled={carregando || erroCarregamento}
+                            disabled={carregando || erroCarregamento || salvando || finalizando}
                             className="w-full py-3 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {carregando ? "Carregando ficha..." : "Salvar ficha clínica"}
+                            {carregando
+                                ? "Carregando ficha..."
+                                : salvando
+                                    ? "Salvando..."
+                                    : "Salvar ficha clínica"}
                         </button>
 
                         {/* FINALIZAR ATENDIMENTO: só para consultas confirmadas cujo horário já chegou */}
@@ -646,8 +691,8 @@ const FichaClinica = () => {
                             <>
                                 <button
                                     type="button"
-                                    onClick={() => setConfirmarFinalizacao(true)}
-                                    disabled={!horarioChegou || finalizando || carregando || erroCarregamento}
+                                    onClick={solicitarFinalizacao}
+                                    disabled={!horarioChegou || finalizando || salvando || carregando || erroCarregamento}
                                     className="w-full py-3 inline-flex items-center justify-center gap-2 bg-white border border-green-600 text-green-700 hover:bg-green-50 transition duration-200 font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <CheckCircle size={18} />
@@ -673,7 +718,7 @@ const FichaClinica = () => {
             <ConfirmModal
                 open={confirmarFinalizacao}
                 title="Finalizar atendimento"
-                description="Salve a ficha antes de finalizar. A consulta será registrada como realizada e passará a contar para o controle de retornos."
+                description="A consulta será registrada como realizada e passará a contar para o controle de retornos."
                 onCancel={() => setConfirmarFinalizacao(false)}
                 onConfirm={handleFinalizar}
                 loading={finalizando}
