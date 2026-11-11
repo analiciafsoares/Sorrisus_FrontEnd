@@ -116,7 +116,16 @@ export default function AgendamentoForm({ agendamentoId }) {
       } else {
         await criarAgendamento(payload);
       }
-      navigate("/agendamentos");
+      navigate("/agendamentos", {
+        state: {
+          toast: {
+            type: "success",
+            message: agendamentoId
+              ? "Agendamento atualizado com sucesso."
+              : "Agendamento criado com sucesso."
+          }
+        }
+      });
     } catch (err) {
       console.error("Erro ao salvar agendamento", err);
       const msg = err?.response?.data?.message || err?.response?.data?.error || "Erro ao salvar. Verifique os dados.";

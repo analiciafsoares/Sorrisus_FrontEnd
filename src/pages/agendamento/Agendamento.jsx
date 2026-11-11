@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   listarAgendamentosPorDentista,
   cancelarAgendamento,
@@ -40,12 +40,21 @@ const Agendamento = () => {
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState({ type: null, message: null });
   const navigate = useNavigate();
+  const location = useLocation();
   const role = getRole() || "";
   const isDentista = role.includes("DENTISTA");
   const isRecepcionista = role.includes("RECEPCIONISTA");
   const podeGerenciar = isDentista || isRecepcionista;
   const [dentistas, setDentistas] = useState([]);
   const [dentistaSelecionado, setDentistaSelecionado] = useState("");
+
+  useEffect(() => {
+    const toastRecebido = location.state?.toast;
+    if (!toastRecebido) return;
+
+    setToast(toastRecebido);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const carregarAgendamentos = useCallback(async () => {
     const userId = getUserId();
