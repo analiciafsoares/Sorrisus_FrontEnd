@@ -9,6 +9,8 @@ import ConfirmModal from '../../components/ConfirmModal';
 import { buscarConsultaPorId, finalizarConsulta } from '../../services/consultaService';
 import { salvarProntuario, buscarProntuarioPorConsulta } from '../../services/prontuarioService';
 import { buscarPacientePorId } from '../../services/pacienteService';
+import { buscarAnamnesePorPaciente } from '../../services/anamneseService';
+import { carregarFichaClinica } from './fichaClinicaLoader';
 
 // --- HELPER COMPONENTS ---
 
@@ -191,6 +193,8 @@ const AnamneseOdontograma = () => {
     const [dataHoraConsulta, setDataHoraConsulta] = useState(null);
     const [confirmarFinalizacao, setConfirmarFinalizacao] = useState(false);
     const [finalizando, setFinalizando] = useState(false);
+    const [carregando, setCarregando] = useState(true);
+    const [erroCarregamento, setErroCarregamento] = useState(false);
 
     const [anamnese, setAnamnese] = useState({
         pacienteId: "",
@@ -217,99 +221,111 @@ const AnamneseOdontograma = () => {
     const [odontogramState, setOdontogramState] = useState(initialOdontogramState);
 
     useEffect(() => {
-        if (!consultaId) return;
+        if (!consultaId) {
+            setCarregando(false);
+            setErroCarregamento(true);
+            setMensagem("Erro: ID da consulta não encontrado.");
+            setTipoMensagem("danger");
+            return;
+        }
+
+        let ativo = true;
 
         async function carregarDadosCompletos() {
+            setCarregando(true);
+            setErroCarregamento(false);
+            setMensagem("");
+            setTipoMensagem("");
+            setStatusConsulta(null);
+            setDataHoraConsulta(null);
+            setOdontogramState(initialOdontogramState);
+
             try {
-                const resConsulta = await buscarConsultaPorId(consultaId);
-                const consulta = Array.isArray(resConsulta.data) ? resConsulta.data[0] : resConsulta.data;
-                setStatusConsulta(consulta.status);
-                setDataHoraConsulta(consulta.dataHora);
+                const dados = await carregarFichaClinica({
+                    consultaId,
+                    buscarConsultaPorId,
+                    buscarPacientePorId,
+                    buscarAnamnesePorPaciente,
+                    buscarProntuarioPorConsulta,
+                });
 
-                let nomePaciente = "Paciente não identificado";
-                let idPacienteEncontrado = "";
+                if (!ativo) return;
 
-                if (consulta.pacienteId) {
+                const dadosAnamnese = dados.anamnese;
+                const dadosProntuario = dados.prontuario;
+
+                setStatusConsulta(dados.consulta.status);
+                setDataHoraConsulta(dados.consulta.dataHora);
+                setAnamnese({
+                    pacienteId: dados.consulta.pacienteId,
+                    pacienteNome: dados.paciente?.nome ?? "Paciente não identificado",
+                    indicador: "",
+                    alergia: {
+                        resposta: dadosAnamnese?.alergiaResposta ?? "Não",
+                        notas: dadosAnamnese?.alergiaNotas ?? "",
+                    },
+                    antibiotico: {
+                        resposta: dadosAnamnese?.antibioticoResposta ?? "Não",
+                        notas: dadosAnamnese?.antibioticoNotas ?? "",
+                    },
+                    anestesico: {
+                        resposta: dadosAnamnese?.anestesicoResposta ?? "Não",
+                        notas: dadosAnamnese?.anestesicoNotas ?? "",
+                    },
+                    sensibilidade: {
+                        resposta: dadosAnamnese?.sensibilidadeResposta ?? "Não",
+                        notas: dadosAnamnese?.sensibilidadeNotas ?? "",
+                    },
+                    pressao: {
+                        resposta: dadosAnamnese?.pressaoResposta ?? "Não",
+                        notas: dadosAnamnese?.pressaoNotas ?? "",
+                    },
+                    medicamento: {
+                        resposta: dadosAnamnese?.medicamentoResposta ?? "Não",
+                        notas: dadosAnamnese?.medicamentoNotas ?? "",
+                    },
+                    problemaSaude: {
+                        resposta: dadosAnamnese?.problemaSaudeResposta ?? "Não",
+                        notas: dadosAnamnese?.problemaSaudeNotas ?? "",
+                    },
+                    observacoes: dadosProntuario?.observacoes ?? "",
+                    planoTratamento: dadosProntuario?.planoTratamento ?? "",
+                });
+
+                if (dadosProntuario?.odontogramaJson) {
                     try {
-                        const resPaciente = await buscarPacientePorId(consulta.pacienteId);
-                        nomePaciente = resPaciente.data.nome;
-                        idPacienteEncontrado = consulta.pacienteId;
-                    } catch (err) {
-                        console.error("Erro ao buscar paciente:", err);
+                        setOdontogramState({
+                            ...initialOdontogramState,
+                            ...JSON.parse(dadosProntuario.odontogramaJson),
+                        });
+                    } catch (error) {
+                        console.error("Erro ao ler JSON do odontograma", error);
                     }
                 }
-
-                setAnamnese(prev => ({
-                    ...prev,
-                    pacienteId: idPacienteEncontrado,
-                    pacienteNome: nomePaciente
-                }));
-
-                try {
-                    const resProntuario = await buscarProntuarioPorConsulta(consultaId);
-                    const dados = resProntuario.data;
-
-                    console.log("Dados médicos carregados:", dados);
-
-                    setAnamnese(prev => ({
-                        ...prev,
-                        pacienteId: idPacienteEncontrado, 
-                        pacienteNome: nomePaciente,
-
-                        alergia: { 
-                            resposta: dados.alergiaResposta || "Não", 
-                            notas: dados.alergiaNotas || "" 
-                        },
-                        antibiotico: { 
-                            resposta: dados.antibioticoResposta || "Não", 
-                            notas: dados.antibioticoNotas || "" 
-                        },
-                        anestesico: { 
-                            resposta: dados.anestesicoResposta || "Não", 
-                            notas: dados.anestesicoNotas || "" 
-                        },
-                        sensibilidade: { 
-                            resposta: dados.sensibilidadeResposta || "Não", 
-                            notas: dados.sensibilidadeNotas || "" 
-                        },
-                        pressao: { 
-                            resposta: dados.pressaoResposta || "Não", 
-                            notas: dados.pressaoNotas || "" 
-                        },
-                        medicamento: { 
-                            resposta: dados.medicamentoResposta || "Não", 
-                            notas: dados.medicamentoNotas || "" 
-                        },
-                        problemaSaude: { 
-                            resposta: dados.problemaSaudeResposta || "Não", 
-                            notas: dados.problemaSaudeNotas || "" 
-                        },
-
-                        observacoes: dados.observacoes || "",
-                        planoTratamento: dados.planoTratamento || "",
-                    }));
-
-                    if (dados.odontogramaJson) {
-                         try {
-                            setOdontogramState(JSON.parse(dados.odontogramaJson));
-                         } catch (e) {
-                            console.error("Erro ao ler JSON do odontograma", e);
-                         }
-                    }
-
-                } catch (errProntuario) {
-                    console.log("Nenhum prontuário/anamnese prévio encontrado. Iniciando limpo.");
-                }
-
             } catch (error) {
+                if (!ativo) return;
+
                 console.error("Erro crítico ao carregar tela:", error);
-                setMensagem("Erro ao carregar dados.");
+                setErroCarregamento(true);
+                setMensagem(
+                    error?.response?.data?.message
+                    ?? error?.response?.data?.erro
+                    ?? "Erro ao carregar dados clínicos. Tente novamente."
+                );
                 setTipoMensagem("danger");
+            } finally {
+                if (ativo) {
+                    setCarregando(false);
+                }
             }
         }
 
         carregarDadosCompletos();
-    }, [consultaId]);
+
+        return () => {
+            ativo = false;
+        };
+    }, [consultaId, initialOdontogramState]);
 
     const handleAnamneseChange = (e) => {
         const { name, value } = e.target;
@@ -344,6 +360,13 @@ const AnamneseOdontograma = () => {
 
         if (!consultaId) {
             setMensagem("Erro: ID da consulta não encontrado.");
+            setTipoMensagem("danger");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        if (carregando || erroCarregamento) {
+            setMensagem("A ficha clínica não pode ser salva porque os dados não foram carregados corretamente.");
             setTipoMensagem("danger");
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
@@ -402,6 +425,14 @@ const AnamneseOdontograma = () => {
     const horarioChegou = dataHoraConsulta && new Date(dataHoraConsulta) <= new Date();
 
     const handleFinalizar = async () => {
+        if (carregando || erroCarregamento) {
+            setMensagem("O atendimento não pode ser finalizado porque os dados clínicos não foram carregados corretamente.");
+            setTipoMensagem("danger");
+            setConfirmarFinalizacao(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         setFinalizando(true);
         try {
             const res = await finalizarConsulta(consultaId);
@@ -595,9 +626,10 @@ const AnamneseOdontograma = () => {
                     <div className="pt-4 space-y-3">
                         <button
                             type="submit"
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30"
+                            disabled={carregando || erroCarregamento}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Salvar Anamnese
+                            {carregando ? "Carregando ficha..." : "Salvar ficha clínica"}
                         </button>
 
                         {/* FINALIZAR ATENDIMENTO: só para consultas confirmadas cujo horário já chegou */}
@@ -606,7 +638,7 @@ const AnamneseOdontograma = () => {
                                 <button
                                     type="button"
                                     onClick={() => setConfirmarFinalizacao(true)}
-                                    disabled={!horarioChegou || finalizando}
+                                    disabled={!horarioChegou || finalizando || carregando || erroCarregamento}
                                     className="w-full py-3 inline-flex items-center justify-center gap-2 bg-white border border-green-600 text-green-700 hover:bg-green-50 transition duration-200 font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <CheckCircle size={18} />
