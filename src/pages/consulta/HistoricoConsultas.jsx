@@ -42,7 +42,7 @@ const HistoricoConsultas = () => {
   const [processando, setProcessando] = useState(false);
   const [toast, setToast] = useState({ type: null, message: null });
 
-  const navegarParaAnamnese = (idConsulta) => {
+  const navegarParaFichaClinica = (idConsulta) => {
     navigate(`/dentista/anamnese/${idConsulta}`);
   };
 
@@ -202,11 +202,11 @@ const HistoricoConsultas = () => {
                         <div className="flex justify-center items-center gap-2">
                           {isDentista && (
                             <button
-                              onClick={() => navegarParaAnamnese(c.id)}
+                              onClick={() => navegarParaFichaClinica(c.id)}
                               className="inline-flex items-center gap-1 px-3 py-1 rounded bg-teal-500 hover:bg-teal-600 text-white text-xs font-medium transition-colors shadow-sm"
                             >
                               <ClipboardList size={14} />
-                              Anamnese
+                              Ficha clínica
                             </button>
                           )}
                           {c.status === "CONFIRMADA" && horarioJaPassou(c) && (

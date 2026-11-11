@@ -7,7 +7,7 @@ import EditarPaciente from "../pages/paciente/EditarPaciente.jsx";
 import Agendamento from "../pages/agendamento/Agendamento.jsx";
 import GerenciarPerfil from "../pages/perfil/GerenciarPerfil.jsx";
 import Dashboard from "../pages/dashboard/DashboardDentista.jsx";
-import AnamneseOdontograma from "../pages/dentista/AnamneseOdontograma.jsx";
+import FichaClinica from "../pages/dentista/FichaClinica.jsx";
 import HistoricoConsultas from "../pages/consulta/HistoricoConsultas.jsx";
 import RetornosPendentes from "../pages/consulta/RetornosPendentes.jsx";
 import VisualizarPortfolio from "../pages/portfolio/VisualizarPortfolio.jsx";
@@ -107,7 +107,7 @@ export default function AppRoutes() {
             path="/dentista/anamnese/:consultaId"
             element={
               <PrivateRoute>
-                <AnamneseOdontograma />
+                <FichaClinica />
               </PrivateRoute>
             }
           />

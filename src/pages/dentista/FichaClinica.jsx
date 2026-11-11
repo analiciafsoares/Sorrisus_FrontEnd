@@ -180,7 +180,7 @@ const Odontogram = ({ odontogramState, onConditionChange }) => {
 
 // --- MAIN COMPONENT ---
 
-const AnamneseOdontograma = () => {
+const FichaClinica = () => {
     const { consultaId } = useParams();
     const navigate = useNavigate();
 
@@ -196,7 +196,7 @@ const AnamneseOdontograma = () => {
     const [carregando, setCarregando] = useState(true);
     const [erroCarregamento, setErroCarregamento] = useState(false);
 
-    const [anamnese, setAnamnese] = useState({
+    const [fichaClinica, setFichaClinica] = useState({
         pacienteId: "",
         pacienteNome: "Carregando...",
         indicador: "",
@@ -256,7 +256,7 @@ const AnamneseOdontograma = () => {
 
                 setStatusConsulta(dados.consulta.status);
                 setDataHoraConsulta(dados.consulta.dataHora);
-                setAnamnese({
+                setFichaClinica({
                     pacienteId: dados.consulta.pacienteId,
                     pacienteNome: dados.paciente?.nome ?? "Paciente não identificado",
                     indicador: "",
@@ -327,12 +327,12 @@ const AnamneseOdontograma = () => {
         };
     }, [consultaId, initialOdontogramState]);
 
-    const handleAnamneseChange = (e) => {
+    const handleFichaClinicaChange = (e) => {
         const { name, value } = e.target;
         const parts = name.split('.');
 
         if (parts.length === 2) {
-            setAnamnese(prev => ({
+            setFichaClinica(prev => ({
                 ...prev,
                 [parts[0]]: {
                     ...prev[parts[0]],
@@ -340,7 +340,7 @@ const AnamneseOdontograma = () => {
                 },
             }));
         } else {
-            setAnamnese(prev => ({ ...prev, [name]: value }));
+            setFichaClinica(prev => ({ ...prev, [name]: value }));
         }
     };
 
@@ -374,28 +374,28 @@ const AnamneseOdontograma = () => {
 
         try {
             const payload = {
-                alergiaResposta: anamnese.alergia.resposta,
-                alergiaNotas: anamnese.alergia.notas,
-                antibioticoResposta: anamnese.antibiotico.resposta,
-                antibioticoNotas: anamnese.antibiotico.notas,
-                anestesicoResposta: anamnese.anestesico.resposta,
-                anestesicoNotas: anamnese.anestesico.notas,
-                sensibilidadeResposta: anamnese.sensibilidade.resposta,
-                sensibilidadeNotas: anamnese.sensibilidade.notas,
-                pressaoResposta: anamnese.pressao.resposta,
-                pressaoNotas: anamnese.pressao.notas,
-                medicamentoResposta: anamnese.medicamento.resposta,
-                medicamentoNotas: anamnese.medicamento.notas,
-                problemaSaudeResposta: anamnese.problemaSaude.resposta,
-                problemaSaudeNotas: anamnese.problemaSaude.notas,
-                observacoes: anamnese.observacoes,
-                planoTratamento: anamnese.planoTratamento,
+                alergiaResposta: fichaClinica.alergia.resposta,
+                alergiaNotas: fichaClinica.alergia.notas,
+                antibioticoResposta: fichaClinica.antibiotico.resposta,
+                antibioticoNotas: fichaClinica.antibiotico.notas,
+                anestesicoResposta: fichaClinica.anestesico.resposta,
+                anestesicoNotas: fichaClinica.anestesico.notas,
+                sensibilidadeResposta: fichaClinica.sensibilidade.resposta,
+                sensibilidadeNotas: fichaClinica.sensibilidade.notas,
+                pressaoResposta: fichaClinica.pressao.resposta,
+                pressaoNotas: fichaClinica.pressao.notas,
+                medicamentoResposta: fichaClinica.medicamento.resposta,
+                medicamentoNotas: fichaClinica.medicamento.notas,
+                problemaSaudeResposta: fichaClinica.problemaSaude.resposta,
+                problemaSaudeNotas: fichaClinica.problemaSaude.notas,
+                observacoes: fichaClinica.observacoes,
+                planoTratamento: fichaClinica.planoTratamento,
                 odontogramaJson: JSON.stringify(odontogramState),
             };
 
             await salvarProntuario(payload, consultaId);
 
-            setMensagem("Anamnese e Prontuário salvos com sucesso!");
+            setMensagem("Ficha clínica salva com sucesso!");
             setTipoMensagem("success");
             
             // 1. SOBE O SCROLL PARA VER A MENSAGEM
@@ -408,7 +408,7 @@ const AnamneseOdontograma = () => {
 
         } catch (error) {
             console.error(error);
-            setMensagem("Erro ao salvar o prontuário. Tente novamente.");
+            setMensagem("Erro ao salvar a ficha clínica. Tente novamente.");
             setTipoMensagem("danger");
             
             // 1. SOBE O SCROLL PARA VER O ERRO
@@ -465,8 +465,8 @@ const AnamneseOdontograma = () => {
 
                 <header className="text-center mb-8 pb-4 border-b-2 border-blue-500">
                     <ClipboardList className="w-10 h-10 text-blue-600 mx-auto mb-2" />
-                    <h1 className="text-3xl font-extrabold text-gray-800">Ficha de Anamnese e Exame Clínico</h1>
-                    <p className="text-gray-600 mt-2">Prontuário do Paciente: <span className="font-semibold">{anamnese.pacienteNome}</span></p>
+                    <h1 className="text-3xl font-extrabold text-gray-800">Ficha Clínica</h1>
+                    <p className="text-gray-600 mt-2">Paciente: <span className="font-semibold">{fichaClinica.pacienteNome}</span></p>
                 </header>
 
                 {/* EXIBIÇÃO DE MENSAGENS (ERRO/SUCESSO) */}
@@ -494,7 +494,7 @@ const AnamneseOdontograma = () => {
                                     icon={() => null} 
                                     type="text" 
                                     name="pacienteNome" 
-                                    value={anamnese.pacienteNome} 
+                                    value={fichaClinica.pacienteNome} 
                                     disabled 
                                     placeholder="Busque pelo paciente..." 
                                     className="!pl-3 !pr-3 bg-gray-100"
@@ -506,8 +506,8 @@ const AnamneseOdontograma = () => {
                                     icon={() => null} 
                                     type="text" 
                                     name="indicador" 
-                                    value={anamnese.indicador} 
-                                    onChange={handleAnamneseChange} 
+                                    value={fichaClinica.indicador} 
+                                    onChange={handleFichaClinicaChange} 
                                     placeholder="Nome ou convênio" 
                                     className="!pl-3 !pr-3"
                                 />
@@ -516,71 +516,77 @@ const AnamneseOdontograma = () => {
                     </section>
 
 
-                    {/* 2. ANAMNESE (HISTÓRICO MÉDICO) */}
+                    {/* 2. ANAMNESE DO PACIENTE */}
                     <section className="p-6 border border-gray-200 rounded-xl shadow-sm space-y-4">
-                        <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2 mb-4">
-                            <Stethoscope className="w-6 h-6 text-red-500" /> Histórico Médico e Alergias
+                        <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2">
+                            <Stethoscope className="w-6 h-6 text-red-500" /> Anamnese do Paciente
                         </h2>
+                        <p className="text-sm text-gray-500">
+                            Informações clínicas gerais do paciente. Revise e atualize quando necessário.
+                        </p>
                         
                         <RadioQuestion 
                             name="alergia" 
                             question="Tem alergia a algum medicamento?" 
-                            value={anamnese.alergia} 
-                            onChange={handleAnamneseChange} 
+                            value={fichaClinica.alergia} 
+                            onChange={handleFichaClinicaChange} 
                             Icon={AlertTriangle}
                             notesPlaceholder="Qual/Quais? (Ex: Penicilina, Látex)"
                         />
                         <RadioQuestion 
                             name="antibiotico" 
                             question="Tem alergia a Antibiótico?" 
-                            value={anamnese.antibiotico} 
-                            onChange={handleAnamneseChange} 
+                            value={fichaClinica.antibiotico} 
+                            onChange={handleFichaClinicaChange} 
                             Icon={Pill}
                         />
                         <RadioQuestion 
                             name="anestesico" 
                             question="Tem alergia a Anestésico? Qual(is)?" 
-                            value={anamnese.anestesico} 
-                            onChange={handleAnamneseChange} 
+                            value={fichaClinica.anestesico} 
+                            onChange={handleFichaClinicaChange} 
                             Icon={Pill}
                         />
                         <RadioQuestion 
                             name="sensibilidade" 
                             question="Sensibilidade a algum medicamento?" 
-                            value={anamnese.sensibilidade} 
-                            onChange={handleAnamneseChange} 
+                            value={fichaClinica.sensibilidade} 
+                            onChange={handleFichaClinicaChange} 
                             Icon={Pill}
                         />
                         <RadioQuestion 
                             name="pressao" 
                             question="Sua pressão sanguínea é alta?" 
-                            value={anamnese.pressao} 
-                            onChange={handleAnamneseChange} 
+                            value={fichaClinica.pressao} 
+                            onChange={handleFichaClinicaChange} 
                             Icon={Heart}
                         />
                         <RadioQuestion 
                             name="medicamento" 
                             question="Está tomando algum medicamento?" 
-                            value={anamnese.medicamento} 
-                            onChange={handleAnamneseChange} 
+                            value={fichaClinica.medicamento} 
+                            onChange={handleFichaClinicaChange} 
                             Icon={Pill}
                             notesPlaceholder="Qual/Quais?"
                         />
                         <RadioQuestion 
                             name="problemaSaude" 
                             question="Tem algum problema de saúde? Qual?" 
-                            value={anamnese.problemaSaude} 
-                            onChange={handleAnamneseChange} 
+                            value={fichaClinica.problemaSaude} 
+                            onChange={handleFichaClinicaChange} 
                             Icon={Heart}
                         />
                     </section>
                     
-                    {/* 3. ODONTOGRAMA */}
+                    {/* 3. ODONTOGRAMA DA CONSULTA */}
                     <section className="p-6 border border-gray-200 rounded-xl shadow-sm space-y-4">
-                        <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2 mb-4">
+                        <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-tooth text-blue-500"><path d="M22 4s-2 10-6 16c-1.5 1-3 1-4 0-4-6-6-16-6-16-1.5 5.5-2.5 9.5-1 11.5 1.5 2 7 2.5 7 2.5 0 0 5.5-.5 7-2.5 1.5-2 0.5-6 1-11.5z"/></svg> 
-                            Odontograma (Dentição Permanente)
+                            Odontograma da Consulta
                         </h2>
+                        <p className="text-sm text-gray-500">
+                            Registro odontológico específico desta consulta.
+                        </p>
                         
                         <Odontogram 
                             odontogramState={odontogramState}
@@ -588,20 +594,23 @@ const AnamneseOdontograma = () => {
                         />
                     </section>
 
-                    {/* 4. OBSERVAÇÕES E PLANO DE TRATAMENTO */}
+                    {/* 4. PRONTUÁRIO DO ATENDIMENTO */}
                     <section className="p-6 border border-gray-200 rounded-xl shadow-sm space-y-4">
-                        <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2 mb-4">
-                            <MessageSquare className="w-6 h-6 text-orange-500" /> Observações e Plano de Tratamento
+                        <h2 className="text-xl font-bold text-gray-700 flex items-center gap-2">
+                            <MessageSquare className="w-6 h-6 text-orange-500" /> Prontuário do Atendimento
                         </h2>
+                        <p className="text-sm text-gray-500">
+                            Observações e plano de tratamento específicos da consulta atual.
+                        </p>
                         
                         <div>
-                            <label htmlFor="observacoes" className="block text-sm font-medium text-gray-700 mb-1">Observações Gerais</label>
+                            <label htmlFor="observacoes" className="block text-sm font-medium text-gray-700 mb-1">Observações Clínicas</label>
                             <textarea
                                 id="observacoes"
                                 name="observacoes"
-                                value={anamnese.observacoes}
-                                onChange={handleAnamneseChange}
-                                placeholder="Anotações relevantes sobre a saúde geral do paciente, queixas principais, etc."
+                                value={fichaClinica.observacoes}
+                                onChange={handleFichaClinicaChange}
+                                placeholder="Registre os achados clínicos, queixas e informações relevantes deste atendimento."
                                 rows="4"
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                             />
@@ -612,8 +621,8 @@ const AnamneseOdontograma = () => {
                             <textarea
                                 id="planoTratamento"
                                 name="planoTratamento"
-                                value={anamnese.planoTratamento}
-                                onChange={handleAnamneseChange}
+                                value={fichaClinica.planoTratamento}
+                                onChange={handleFichaClinicaChange}
                                 placeholder="Descreva o plano de tratamento detalhado, incluindo procedimentos, etapas e custos."
                                 rows="6"
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
@@ -673,4 +682,4 @@ const AnamneseOdontograma = () => {
     );
 };
 
-export default AnamneseOdontograma;
+export default FichaClinica;
