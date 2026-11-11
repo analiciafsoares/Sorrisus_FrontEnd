@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   cancelarConsulta,
@@ -15,6 +15,7 @@ import Toast from "../../components/Toast";
 import { formatarData } from "../../utils/formatters";
 import { ArrowLeft, ClipboardList, History, UserX, XCircle } from "lucide-react";
 import { getToken, getUserId } from "../../services/authService";
+import { ordenarConsultas } from "../../utils/ordenacaoListas";
 
 const ACOES = {
   naoCompareceu: {
@@ -118,6 +119,10 @@ const HistoricoConsultas = () => {
   const isRecepcionista = userRole && userRole.includes("RECEPCIONISTA");
   const podeGerenciar = isDentista || isRecepcionista;
   const totalColunas = isRecepcionista ? 6 : isDentista ? 5 : 4;
+  const consultasOrdenadas = useMemo(
+    () => ordenarConsultas(consultas, { priorizarAtivas: Boolean(podeGerenciar) }),
+    [consultas, podeGerenciar]
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -170,12 +175,12 @@ const HistoricoConsultas = () => {
                 <tr>
                   <td colSpan={totalColunas} className="text-center py-8 text-gray-500">Carregando...</td>
                 </tr>
-              ) : consultas.length === 0 ? (
+              ) : consultasOrdenadas.length === 0 ? (
                 <tr>
                   <td colSpan={totalColunas} className="px-6 py-8 text-center text-gray-500">Nenhuma consulta encontrada.</td>
                 </tr>
               ) : (
-                consultas.map((c) => (
+                consultasOrdenadas.map((c) => (
                   <tr key={c.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{formatarData(c.dataHora)}</td>
 

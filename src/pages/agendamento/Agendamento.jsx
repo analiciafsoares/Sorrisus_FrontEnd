@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   listarAgendamentosPorDentista,
@@ -9,6 +9,7 @@ import {
 import { buscarPacientePorId } from "../../services/pacienteService";
 import { listarDentistas } from "../../services/dentistaService";
 import { getRole, getUserId } from "../../services/authService";
+import { ordenarAgendamentos } from "../../utils/ordenacaoListas";
 import Navbar from "../../components/Navbar";
 import ConfirmModal from "../../components/ConfirmModal";
 import Toast from "../../components/Toast";
@@ -47,6 +48,10 @@ const Agendamento = () => {
   const podeGerenciar = isDentista || isRecepcionista;
   const [dentistas, setDentistas] = useState([]);
   const [dentistaSelecionado, setDentistaSelecionado] = useState("");
+  const agendamentosOrdenados = useMemo(
+    () => ordenarAgendamentos(agendamentos),
+    [agendamentos]
+  );
 
   useEffect(() => {
     const toastRecebido = location.state?.toast;
@@ -270,12 +275,12 @@ const Agendamento = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr><td colSpan="5" className="text-center py-8 text-gray-500">Carregando sua agenda...</td></tr>
-              ) : agendamentos.length === 0 ? (
+              ) : agendamentosOrdenados.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="px-6 py-8 text-center text-gray-500">Nenhum agendamento encontrado.</td>
                 </tr>
               ) : (
-                agendamentos.map((ag) => {
+                agendamentosOrdenados.map((ag) => {
                   const status = statusDoAgendamento(ag);
                   const { label, Icone, className } = STATUS_AGENDAMENTO[status] || STATUS_AGENDAMENTO.PENDENTE;
                   return (
