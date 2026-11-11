@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import ConfirmModal from "../../components/ConfirmModal";
 import Toast from "../../components/Toast";
+import { ordenarPacientes } from "../../utils/ordenacaoListas";
 import { ArrowLeft, Plus, Search, Users, X } from "lucide-react";
 
 const normalizarTexto = (valor) =>
@@ -44,13 +45,19 @@ const Paciente = () => {
 
   const pacientesFiltrados = useMemo(() => {
     const termo = normalizarTexto(busca.trim());
-    if (!termo) return pacientes;
     const digitos = somenteDigitos(termo);
-    return pacientes.filter((p) =>
-      normalizarTexto(p.nome).includes(termo) ||
-      normalizarTexto(p.email).includes(termo) ||
-      (digitos && (somenteDigitos(p.cpf).includes(digitos) || somenteDigitos(p.telefone).includes(digitos)))
-    );
+    const pacientesEncontrados = !termo
+      ? pacientes
+      : pacientes.filter((p) => {
+          return normalizarTexto(p.nome).includes(termo)
+            || normalizarTexto(p.email).includes(termo)
+            || (digitos && (
+              somenteDigitos(p.cpf).includes(digitos)
+              || somenteDigitos(p.telefone).includes(digitos)
+            ));
+        });
+
+    return ordenarPacientes(pacientesEncontrados);
   }, [pacientes, busca]);
 
   const abrirModalExcluir = (paciente) => {

@@ -1,10 +1,89 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { ordenarAgendamentos, ordenarConsultas } from "./ordenacaoListas.js";
+import {
+  ordenarAgendamentos,
+  ordenarConsultas,
+  ordenarPacientes,
+} from "./ordenacaoListas.js";
 
 const AGORA = new Date("2026-11-11T12:00:00");
 const ids = (lista) => lista.map((item) => item.id);
+const nomes = (lista) => lista.map((item) => item.nome);
+
+test("ordena pacientes alfabeticamente pelo nome", () => {
+  const lista = [
+    { id: 1, nome: "Carlos" },
+    { id: 2, nome: "Ana" },
+    { id: 3, nome: "Maria" },
+    { id: 4, nome: "Beatriz" },
+  ];
+
+  assert.deepEqual(nomes(ordenarPacientes(lista)), ["Ana", "Beatriz", "Carlos", "Maria"]);
+});
+
+test("ordena pacientes ignorando diferenças entre maiúsculas e minúsculas", () => {
+  const lista = [
+    { id: 1, nome: "Carlos" },
+    { id: 2, nome: "ana" },
+    { id: 3, nome: "beatriz" },
+  ];
+
+  assert.deepEqual(nomes(ordenarPacientes(lista)), ["ana", "beatriz", "Carlos"]);
+});
+
+test("ordena nomes acentuados naturalmente em português", () => {
+  const lista = [
+    { id: 1, nome: "João" },
+    { id: 2, nome: "Érica" },
+    { id: 3, nome: "Ana" },
+    { id: 4, nome: "Álvaro" },
+  ];
+
+  assert.deepEqual(nomes(ordenarPacientes(lista)), ["Álvaro", "Ana", "Érica", "João"]);
+});
+
+test("desempata pacientes com o mesmo nome pelo id e preserva o array original", () => {
+  const lista = [
+    { id: 3, nome: "Maria Silva" },
+    { id: 1, nome: "Maria Silva" },
+    { id: 2, nome: "Maria Silva" },
+  ];
+  const copiaOriginal = [...lista];
+
+  assert.deepEqual(ids(ordenarPacientes(lista)), [1, 2, 3]);
+  assert.deepEqual(lista, copiaOriginal);
+});
+
+test("mantém resultados filtrados em ordem alfabética", () => {
+  const lista = [
+    { id: 1, nome: "Maria José" },
+    { id: 2, nome: "Carlos" },
+    { id: 3, nome: "Maria Alves" },
+    { id: 4, nome: "Maria Clara" },
+  ];
+  const filtrados = lista.filter((paciente) => paciente.nome.includes("Maria"));
+
+  assert.deepEqual(
+    nomes(ordenarPacientes(filtrados)),
+    ["Maria Alves", "Maria Clara", "Maria José"]
+  );
+});
+
+test("posiciona novo paciente conforme o nome, independentemente do id", () => {
+  const lista = [
+    { id: 1, nome: "Ana" },
+    { id: 2, nome: "Carlos" },
+    { id: 3, nome: "João" },
+    { id: 4, nome: "Maria" },
+    { id: 99, nome: "Beatriz" },
+  ];
+
+  assert.deepEqual(
+    nomes(ordenarPacientes(lista)),
+    ["Ana", "Beatriz", "Carlos", "João", "Maria"]
+  );
+});
 
 test("prioriza agendamentos futuros por status e proximidade", () => {
   const lista = [
