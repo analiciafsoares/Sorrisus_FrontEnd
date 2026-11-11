@@ -84,10 +84,6 @@ const Paciente = () => {
     navigate(`/pacientes/editar/${id}`);
   };
 
-  const criarAnamnese = (id) => {
-    navigate(`/dentista/anamnese/${id}`);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -193,12 +189,6 @@ const Paciente = () => {
                           Excluir
                         </button>
 
-                        <button
-                          onClick={() => criarAnamnese(p.id)}
-                          className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-xs font-medium transition-colors shadow-sm"
-                        >
-                          Anamnese
-                        </button>
                       </div>
                     </td>
                   </tr>
