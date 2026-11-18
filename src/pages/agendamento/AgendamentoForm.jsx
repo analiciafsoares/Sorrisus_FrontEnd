@@ -37,7 +37,9 @@ const toInputDateTime = (isoString) => {
 
 const fromInputDateTimeToBackend = (value) => {
   if (!value) return null;
-  return `${value}:00`;
+  const [datePart, timePart = "00:00"] = value.split("T");
+  const [hh = "00", mm = "00", ss = "00"] = timePart.split(":");
+  return `${datePart}T${hh.padStart(2, "0")}:${mm.padStart(2, "0")}:${ss.padStart(2, "0")}`;
 };
 
 export default function AgendamentoForm({ agendamentoId }) {

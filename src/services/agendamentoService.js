@@ -33,3 +33,6 @@ export const confirmarAgendamento = (id) => {
 export const listarAgendamentosPorPaciente = (pacienteId) => {
   return api.get(`${ENDPOINT}/paciente/${pacienteId}`);
 };
+export const cancelarAgendamento = (id) => {
+  return api.post(`${ENDPOINT}/${id}/cancelar`);
+};
