@@ -5,7 +5,7 @@ import Navbar from "../../components/Navbar.jsx";
 import { listarPacientes } from "../../services/pacienteService.js";
 import { listarDentistas } from "../../services/dentistaService.js";
 import { listarConsultasPorDentista, listarConsultasParaRecepcao } from "../../services/consultaService.js";
-import { Users, Calendar, UserCog, TrendingUp, Clock } from "lucide-react";
+import { Users, Calendar, UserCog, TrendingUp, Clock, UserPlus } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { getUserId } from "../../services/authService.js";
 
@@ -23,6 +23,7 @@ const Dashboard = () => {
     "ROLE_RECEPCIONISTA",
     "RECEPCIONISTA",
   ].includes(role);
+  const isDentista = role === "ROLE_DENTISTA" || role === "DENTISTA";
 
   const getCurrentUserId = () => {
     if (user?.id) return user.id;
@@ -183,6 +184,16 @@ const Dashboard = () => {
               <Clock className="w-8 h-8 mb-4 opacity-80" />
               <h3 className="text-xl font-bold mb-1">Retornos Pendentes</h3>
               <p className="text-amber-50 text-sm">Acompanhar pacientes com retorno pendente</p>
+            </div>
+          )}
+          {isDentista && (
+            <div
+              onClick={() => navigate("/profissionais")}
+              className="bg-teal-600 hover:bg-teal-700 text-white p-6 rounded-xl shadow-md flex flex-col items-start text-left cursor-pointer transition-colors duration-200"
+            >
+              <UserPlus className="w-8 h-8 mb-4 opacity-80" />
+              <h3 className="text-xl font-bold mb-1">Profissionais</h3>
+              <p className="text-teal-50 text-sm">Cadastrar dentistas e recepcionistas</p>
             </div>
           )}
         </div>

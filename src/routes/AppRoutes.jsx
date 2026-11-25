@@ -17,6 +17,7 @@ import NovoServico from "../pages/servico/NovoServico.jsx";
 import EditarServico from "../pages/servico/EditarServico.jsx";
 
 import SobreNos from "../pages/SobreNos.jsx";
+import Profissionais from "../pages/profissionais/Profissionais.jsx";
 import NovoPaciente from "../pages/paciente/NovoPaciente.jsx";
 import DashboardPaciente from "../pages/dashboard/DashboardPaciente.jsx";
 import DashboardRedirect from "./DashboardRedirect.jsx";
@@ -29,6 +30,7 @@ const ROLES_GESTAO_SERVICOS = [
 ];
 
 const ROLES_GESTAO_AGENDAMENTOS = ROLES_GESTAO_SERVICOS;
+const ROLES_ADMINISTRACAO = ["ROLE_DENTISTA", "DENTISTA"];
 
 export default function AppRoutes() {
   return (
@@ -37,6 +39,8 @@ export default function AppRoutes() {
         <Routes>
           {/* Rotas Públicas */}
           <Route path="/login" element={<Login />} />
+          {/* Portfólio público: visitantes consultam os procedimentos sem login */}
+          <Route path="/portfolio" element={<VisualizarPortfolio />} />
 
           {/* Rotas Privadas */}
           <Route
@@ -56,10 +60,10 @@ export default function AppRoutes() {
             }
           />
           <Route
-            path="/portfolio"
+            path="/profissionais"
             element={
-              <PrivateRoute>
-                <VisualizarPortfolio />
+              <PrivateRoute allowedRoles={ROLES_ADMINISTRACAO}>
+                <Profissionais />
               </PrivateRoute>
             }
           />

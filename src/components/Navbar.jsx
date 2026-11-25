@@ -1,6 +1,6 @@
 import { useAuth } from "../context/AuthContext.jsx"; import { useMemo } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { LogOut, User, Home, Users, Calendar, Power, ClipboardList, Info, Clock, Menu, X } from "lucide-react";
+import { LogOut, LogIn, User, Home, Users, Calendar, Power, ClipboardList, Info, Clock, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const ROLE_LABELS = {
@@ -56,14 +56,42 @@ const Navbar = () => {
   };
 
   const classeItemDesktop = ({ isActive }) =>
-    `flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium transition-colors xl:gap-2 xl:px-3 xl:text-[15px] ${
-      isActive ? "bg-white/15 text-white" : "text-blue-50 hover:bg-white/10 hover:text-white"
+    `flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-medium transition-colors xl:gap-2 xl:px-3 xl:text-[15px] ${isActive ? "bg-white/15 text-white" : "text-blue-50 hover:bg-white/10 hover:text-white"
     }`;
 
   const classeItemMobile = ({ isActive }) =>
-    `flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors ${
-      isActive ? "bg-white/15 text-white" : "text-blue-50 hover:bg-white/10 hover:text-white"
+    `flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors ${isActive ? "bg-white/15 text-white" : "text-blue-50 hover:bg-white/10 hover:text-white"
     }`;
+
+  if (!user) {
+    return (
+      <nav className="bg-blue-600 shadow-sm border-b border-blue-700">
+        <div className="flex h-16 w-full items-center justify-between gap-3 px-3 sm:px-4 xl:px-6">
+          <Link to="/portfolio" className="flex shrink-0 items-center gap-2.5">
+            <img
+              src="/sorrisus-icone.png"
+              alt=""
+              className="h-10 w-10 rounded-xl object-cover shadow-sm ring-2 ring-white/70"
+            />
+            <span className="text-xl font-bold tracking-tight text-white">Sorrisus</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <NavLink to="/portfolio" className={classeItemDesktop}>
+              <ClipboardList className="h-4 w-4 xl:h-5 xl:w-5" />
+              <span>Procedimentos</span>
+            </NavLink>
+            <Link
+              to="/login"
+              className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-shadow hover:shadow-md"
+            >
+              <LogIn className="h-4 w-4" />
+              Entrar
+            </Link>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <>
