@@ -134,7 +134,7 @@ const HistoricoConsultas = () => {
             <div className="w-11 h-11 bg-blue-100 rounded-lg flex items-center justify-center">
               <History className="w-6 h-6 text-blue-600" />
             </div>
-            <h1 className="text-2xl font-semibold text-gray-800">Histórico de Consultas</h1>
+            <h1 className="text-2xl font-semibold text-gray-800">Minhas Consultas</h1>
           </div>
 
           <button
