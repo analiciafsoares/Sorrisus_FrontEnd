@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar.jsx";
 import { listarPacientes } from "../../services/pacienteService.js";
 import { listarDentistas } from "../../services/dentistaService.js";
-import { listarConsultasPorDentista, listarConsultasParaRecepcao } from "../../services/consultaService.js";
-import { Users, Calendar, UserCog, TrendingUp, Clock, UserPlus } from "lucide-react";
+import { listarConsultasPorDentista, listarConsultasParaRecepcao, listarRetornosPendentes } from "../../services/consultaService.js";
+import { Users, Calendar, UserCog, Clock, UserPlus } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { getUserId } from "../../services/authService.js";
 
@@ -15,6 +15,7 @@ const Dashboard = () => {
   const [pacientesCount, setPacientesCount] = useState(null);
   const [dentistasCount, setDentistasCount] = useState(null);
   const [consultasCount, setConsultasCount] = useState(null);
+  const [retornosCount, setRetornosCount] = useState(null);
   const [error, setError] = useState(null);
   const role = String(user?.role || "").toUpperCase();
   const podeVisualizarRetornos = [
@@ -81,8 +82,21 @@ const Dashboard = () => {
       }
     };
 
+    const fetchRetornos = async () => {
+      try {
+        const res = await listarRetornosPendentes();
+        if (!mounted) return;
+        setRetornosCount(getCountFromResponse(res));
+      } catch (err) {
+        console.error("Erro ao buscar retornos pendentes:", err);
+        if (!mounted) return;
+        setRetornosCount(0);
+      }
+    };
+
     fetchCounts();
     fetchConsultas();
+    fetchRetornos();
 
     return () => {
       mounted = false;
@@ -139,11 +153,11 @@ const Dashboard = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Taxa Ocupação</p>
-                <p className="text-2xl font-bold text-gray-800">87%</p>
+                <p className="text-sm text-gray-600 mb-1">Retornos Pendentes</p>
+                <p className="text-2xl font-bold text-gray-800">{retornosCount ?? "-"}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Clock className="w-6 h-6 text-amber-600" />
               </div>
             </div>
           </div>
