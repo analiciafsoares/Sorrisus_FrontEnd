@@ -110,7 +110,19 @@ export default function ServicoList() {
                 <tr><td colSpan="5" className="text-center py-8 text-gray-500">Carregando serviços...</td></tr>
               ) : servicos.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">Nenhum serviço cadastrado.</td>
+                  <td colSpan="5" className="px-6 py-10 text-center">
+                    <p className="font-medium text-gray-700">Nenhum serviço cadastrado ainda.</p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Cadastre os procedimentos oferecidos pela clínica para exibi-los no portfólio e associá-los aos agendamentos.
+                    </p>
+                    <button
+                      onClick={() => navigate("/servicos/novo")}
+                      className="mt-4 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md font-medium"
+                    >
+                      <Plus size={18} />
+                      Cadastrar primeiro serviço
+                    </button>
+                  </td>
                 </tr>
               ) : (
                 servicos.map((s) => (

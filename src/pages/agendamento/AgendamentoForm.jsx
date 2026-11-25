@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import {
   criarAgendamento,
@@ -225,6 +225,15 @@ export default function AgendamentoForm({ agendamentoId }) {
                       </option>
                     ))}
                   </select>
+                  {servicos.length === 0 && (
+                    <span className="mt-1 block text-xs text-gray-500">
+                      Nenhum serviço cadastrado. O agendamento pode ser salvo sem serviço, ou cadastre os procedimentos em{" "}
+                      <Link to="/servicos" className="font-medium text-blue-600 hover:underline">
+                        Serviços
+                      </Link>
+                      .
+                    </span>
+                  )}
                 </label>
               </div>
 
