@@ -174,7 +174,7 @@ const Dashboard = () => {
           >
             <Calendar className="w-8 h-8 mb-4 opacity-80" />
             <h3 className="text-xl font-bold mb-1">Consultas</h3>
-            <p className="text-purple-100 text-sm">Visualizar histórico de consultas</p>
+            <p className="text-purple-100 text-sm">Visualizar minhas consultas</p>
           </div>
           {podeVisualizarRetornos && (
             <div

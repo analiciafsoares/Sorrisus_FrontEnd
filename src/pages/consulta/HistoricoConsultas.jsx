@@ -118,7 +118,7 @@ const HistoricoConsultas = () => {
   const isDentista = userRole && userRole.includes("DENTISTA");
   const isRecepcionista = userRole && userRole.includes("RECEPCIONISTA");
   const podeGerenciar = isDentista || isRecepcionista;
-  const totalColunas = isRecepcionista ? 6 : isDentista ? 5 : 4;
+  const totalColunas = isRecepcionista ? 5 : isDentista ? 4 : 3;
   const consultasOrdenadas = useMemo(
     () => ordenarConsultas(consultas, { priorizarAtivas: Boolean(podeGerenciar) }),
     [consultas, podeGerenciar]
@@ -134,7 +134,7 @@ const HistoricoConsultas = () => {
             <div className="w-11 h-11 bg-blue-100 rounded-lg flex items-center justify-center">
               <History className="w-6 h-6 text-blue-600" />
             </div>
-            <h1 className="text-2xl font-semibold text-gray-800">Histórico de Consultas</h1>
+            <h1 className="text-2xl font-semibold text-gray-800">Minhas Consultas</h1>
           </div>
 
           <button
@@ -163,7 +163,6 @@ const HistoricoConsultas = () => {
                 )}
 
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Observação</th>
                 {podeGerenciar && (
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 )}
@@ -196,10 +195,6 @@ const HistoricoConsultas = () => {
 
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge status={c.status} />
-                    </td>
-
-                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={c.observacao}>
-                      {c.observacao || "-"}
                     </td>
 
                     {podeGerenciar && (

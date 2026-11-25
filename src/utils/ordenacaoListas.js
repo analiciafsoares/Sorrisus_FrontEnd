@@ -47,6 +47,12 @@ const desempatar = (a, b) =>
   || collator.compare(nomeDentista(a), nomeDentista(b))
   || compararId(a.id, b.id);
 
+export const ordenarPacientes = (lista) =>
+  [...lista].sort((a, b) =>
+    collator.compare(String(a.nome ?? ""), String(b.nome ?? ""))
+    || compararId(a.id, b.id)
+  );
+
 const statusAgendamento = (agendamento) =>
   agendamento.status || (agendamento.confirmado ? "CONFIRMADO" : "PENDENTE");
 

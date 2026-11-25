@@ -4,6 +4,7 @@ import Navbar from "../../components/Navbar";
 import Toast from "../../components/Toast";
 import { cadastrarPaciente } from "../../services/pacienteService";
 import { ArrowLeft, Info, Save, User } from "lucide-react";
+import { normalizarCpf, validarCpf } from "../../utils/cpf";
 
 export default function NovoPaciente() {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export default function NovoPaciente() {
     const e = {};
     if (!form.nome || form.nome.trim().length < 2) e.nome = "Nome é obrigatório (mínimo 2 caracteres).";
     if (!form.email || !/^\S+@\S+\.\S+$/.test(form.email)) e.email = "E-mail inválido.";
-    if (!form.cpf || form.cpf.replace(/\D/g, "").length < 11) e.cpf = "CPF inválido.";
+    if (!validarCpf(form.cpf)) e.cpf = "CPF inválido.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -58,7 +59,7 @@ export default function NovoPaciente() {
       const payload = {
         nome: form.nome.trim(),
         email: form.email.trim(),
-        cpf: onlyDigits(form.cpf),
+        cpf: normalizarCpf(form.cpf),
         telefone: onlyDigits(form.telefone) || null,
         dataNascimento: form.dataNascimento || null
       };

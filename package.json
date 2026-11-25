@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node --test src/pages/dentista/fichaClinicaLoader.test.js src/pages/dentista/fichaClinicaState.test.js src/utils/ordenacaoListas.test.js",
+    "test": "node --test src/pages/dentista/fichaClinicaLoader.test.js src/pages/dentista/fichaClinicaState.test.js src/utils/cpf.test.js src/utils/ordenacaoListas.test.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

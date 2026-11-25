@@ -4,6 +4,7 @@ import { buscarPacientePorId, atualizarPaciente } from "../../services/pacienteS
 import Navbar from "../../components/Navbar";
 import Toast from "../../components/Toast";
 import { ArrowLeft, Save } from "lucide-react";
+import { normalizarCpf, validarCpf } from "../../utils/cpf";
 
 const formatDateForInput = (iso) => {
   if (!iso) return "";
@@ -56,7 +57,7 @@ export default function EditarPaciente() {
     const e = {};
     if (!form.nome || form.nome.trim().length < 2) e.nome = "Nome é obrigatório (mínimo 2 caracteres).";
     if (!form.email || !/^\S+@\S+\.\S+$/.test(form.email)) e.email = "E-mail inválido.";
-    if (!form.cpf || form.cpf.replace(/\D/g, "").length < 11) e.cpf = "CPF inválido.";
+    if (!validarCpf(form.cpf)) e.cpf = "CPF inválido.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -80,7 +81,7 @@ export default function EditarPaciente() {
       const payload = {
         nome: form.nome,
         email: form.email,
-        cpf: form.cpf,
+        cpf: normalizarCpf(form.cpf),
         telefone: form.telefone || null,
         dataNascimento: form.dataNascimento || null
       };
