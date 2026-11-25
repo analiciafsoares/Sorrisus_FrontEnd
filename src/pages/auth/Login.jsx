@@ -245,6 +245,11 @@ const Login = () => {
               <br />
               No primeiro acesso, troque a senha inicial no seu perfil.
             </p>
+            <p className="mt-3 text-center text-sm">
+              <Link to="/portfolio" className="font-semibold text-blue-600 hover:text-blue-700">
+                Conheça os procedimentos da clínica
+              </Link>
+            </p>
           </div>
         </div>
 

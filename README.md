@@ -10,7 +10,7 @@ O menu e as ações disponíveis mudam conforme o perfil do usuário logado:
 
 | Perfil | O que pode fazer |
 | :--- | :--- |
-| **Dentista** | Agenda própria; gerenciar pacientes, agendamentos e serviços; preencher a ficha clínica e finalizar atendimentos; registrar não comparecimento e cancelar consultas; ver retornos pendentes. |
+| **Dentista** | Agenda própria; gerenciar pacientes, agendamentos e serviços; preencher a ficha clínica e finalizar atendimentos; registrar não comparecimento e cancelar consultas; ver retornos pendentes; **cadastrar dentistas e recepcionistas** (o dentista atua como administrador). |
 | **Recepcionista** | Agenda da clínica (escolhendo o dentista); gerenciar pacientes, agendamentos e serviços; registrar não comparecimento e cancelar consultas; ver retornos pendentes. |
 | **Paciente** | Visualizar os próprios agendamentos e consultas, os procedimentos oferecidos e o próprio perfil. Não cria nem altera agendamentos. |
 
@@ -29,7 +29,8 @@ As restrições também são aplicadas pela API, que responde **403** quando o p
 - **Ficha clínica** (anamnese + odontograma + prontuário) e botão **Finalizar atendimento**, liberado a partir do horário da consulta.
 - **Retornos pendentes:** pacientes cuja última consulta realizada passou de 6 meses e que não têm novo agendamento.
 - **Serviços:** cadastro, edição e desativação (dentista e recepcionista).
-- **Procedimentos:** catálogo dos serviços ativos, com busca.
+- **Procedimentos (portfólio público):** catálogo dos serviços ativos, com busca. Pode ser acessado sem login; o visitante vê um menu reduzido com o botão **Entrar**, e a tela de login tem um link para ele.
+- **Profissionais** (somente dentista): lista dentistas e recepcionistas e cadastra novos profissionais com senha provisória.
 - **Sobre Nós:** apresentação da clínica e do corpo clínico.
 - **Perfil unificado** (`/perfil`): visualiza e edita os dados do usuário conforme o perfil e permite **alterar a senha** (senha atual + nova senha com confirmação).
 - **Navbar responsiva:** menu completo em telas a partir de 1024 px e menu recolhível em telas menores; página atual destacada.
@@ -51,7 +52,8 @@ As restrições também são aplicadas pela API, que responde **403** quando o p
 | `/retornos-pendentes` | Retornos pendentes | Autenticado |
 | `/dentista/anamnese/:consultaId` | Ficha clínica da consulta | Autenticado |
 | `/servicos`, `/servicos/novo`, `/servicos/editar/:id` | Gestão de serviços | Dentista e recepcionista |
-| `/portfolio` | Procedimentos | Autenticado |
+| `/portfolio` | Procedimentos (portfólio) | Pública |
+| `/profissionais` | Cadastro de profissionais | Dentista |
 | `/sobre-nos` | Sobre Nós | Autenticado |
 | `/perfil` | Perfil do usuário | Autenticado |
 

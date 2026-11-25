@@ -62,7 +62,7 @@ const VisualizarPortfolio = () => {
                     </h1>
                     <div className="max-w-6xl mx-auto px-4 -mt-16 mb-6">
                         <button 
-                            onClick={() => navigate(-1)} 
+                            onClick={() => navigate("/")} 
                             className="flex items-center gap-2 text-white bg-blue-700/80 hover:bg-blue-900 px-4 py-2 rounded-lg transition-colors font-medium shadow-md"
                         >
                             <ArrowLeft className="w-5 h-5" />
