@@ -20,7 +20,6 @@ const Login = () => {
     email: "",
     password: ""
   });
-  const [rememberMe, setRememberMe] = useState(false);
   const [touched, setTouched] = useState({
     email: false,
     password: false
@@ -200,26 +199,6 @@ const Login = () => {
                     <span>•</span> {fieldErrors.password}
                   </p>
                 )}
-              </div>
-
-              {/* Lembrar-me e Esqueci senha */}
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                    disabled={loading}
-                  />
-                  <span className="text-gray-700">Lembrar-me</span>
-                </label>
-                <Link
-                  to="/recuperar-senha"
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Esqueci minha senha
-                </Link>
               </div>
 
               {/* Botão Submit */}
